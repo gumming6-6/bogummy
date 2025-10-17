@@ -162,6 +162,30 @@ export default function PokaListApp() {
   const srcParam = params.get("src");
   const sourceMode = !!srcParam; // 옵션 A: 외부 JSON을 읽는 모드
   const shareMode = !!sharedParam || sourceMode;
+  // 파라미터 없이 열렸을 때, 같은 위치의 catalog.json을 자동으로 불러와 리다이렉트
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  const hasParam = params.get("src") || params.get("catalog");
+  if (hasParam) return; // 이미 공유 모드면 패스
+
+  // 현재 경로 기준 catalog.json 가정
+  const guess = new URL("catalog.json", window.location.href).toString();
+  // 존재하면 ?src=... 로 리다이렉트
+  (async () => {
+    try {
+      const res = await fetch(guess, { method: "HEAD", cache: "no-cache" });
+      if (res.ok) {
+        const base = window.location.origin + window.location.pathname;
+        const link = `${base}?src=${encodeURIComponent(guess)}`;
+        window.location.replace(link);
+      }
+    } catch {
+      // catalog.json이 없으면 아무것도 하지 않음(로컬 모드로 사용)
+    }
+  })();
+}, []);
+
 
   // 공유 메타 & 목록(공유 모드)
   const [shareMeta, setShareMeta] = useState({ id: "", title: "공유 카탈로그", note: "" });
