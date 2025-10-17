@@ -162,30 +162,27 @@ export default function PokaListApp() {
   const srcParam = params.get("src");
   const sourceMode = !!srcParam; // 옵션 A: 외부 JSON을 읽는 모드
   const shareMode = !!sharedParam || sourceMode;
-  // 파라미터 없이 열렸을 때, 같은 위치의 catalog.json을 자동으로 불러와 리다이렉트
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  const params = new URLSearchParams(window.location.search);
-  const hasParam = params.get("src") || params.get("catalog");
-  if (hasParam) return; // 이미 공유 모드면 패스
 
-  // 현재 경로 기준 catalog.json 가정
-  const guess = new URL("catalog.json", window.location.href).toString();
-  // 존재하면 ?src=... 로 리다이렉트
-  (async () => {
-    try {
-      const res = await fetch(guess, { method: "HEAD", cache: "no-cache" });
-      if (res.ok) {
-        const base = window.location.origin + window.location.pathname;
-        const link = `${base}?src=${encodeURIComponent(guess)}`;
-        window.location.replace(link);
-      }
-    } catch {
-      // catalog.json이 없으면 아무것도 하지 않음(로컬 모드로 사용)
-    }
-  })();
-}, []);
+  // GH Pages 기본 주소로 들어왔을 때 자동으로 catalog.json을 불러오도록 처리
+  // (?src= 또는 ?catalog= 파라미터가 없으면 같은 경로의 catalog.json 존재 여부를 HEAD로 확인 후 리다이렉트)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("src") || params.get("catalog")) return; // 이미 공유 모드면 패스
 
+    const baseURL = window.location.href.endsWith("/") ? window.location.href : window.location.href + "/";
+    const guess = new URL("catalog.json", baseURL).toString();
+    (async () => {
+      try {
+        const res = await fetch(guess, { method: "HEAD", cache: "no-cache" });
+        if (res.ok) {
+          const base = window.location.origin + window.location.pathname;
+          const link = `${base}?src=${encodeURIComponent(guess)}`;
+          window.location.replace(link);
+        }
+      } catch { /* ignore */ }
+    })();
+  }, []);
 
   // 공유 메타 & 목록(공유 모드)
   const [shareMeta, setShareMeta] = useState({ id: "", title: "공유 카탈로그", note: "" });
@@ -872,21 +869,6 @@ ${link}`);
           </div>
         </div>
       )}
-
-      {/* Toast */}
-      {toast.show && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] px-3 py-2 rounded-lg bg-black/80 text-white text-sm shadow-lg">
-          {toast.text}
-        </div>
-      )}
-
-      <footer className="py-8 text-center text-xs text-slate-500">
-        {shareMode ? (
-          <>이 페이지는 <b>공유 체크 모드</b>입니다. 보유 체크는 <b>이 브라우저에만 저장</b>돼요.</>
-        ) : (
-          <>브라우저 로컬에 저장됩니다. 다른 기기에서 사용하려면 <b>JSON 내보내기</b> 후 가져오기를 이용하세요.</>
-        )}
-      </footer>
     </div>
   );
 }
