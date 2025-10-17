@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "title": "포카 카탈로그",
+  "note": "예시 JSON (옵션 A: src 모드)",
+  "items": [
+    {
+      "id": "ex1",
+      "title": "예시 타이틀 A",
+      "purchaseDate": "2025-10-01",
+      "event": "시그 기본포카",
+      "vendor": "YES24",
+      "year": "2025",
+      "notes": "예시 메모",
+      "imageUrl": "images/sample.jpg"
+    }
+  ]
+}
