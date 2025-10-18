@@ -440,8 +440,8 @@ export default function PokaListApp() {
       reader.readAsDataURL(file);
     });
     setForm((f) => ({ ...f, imageDataUrl: dataUrl }));
-  }));
   }
+
   async function handleMultiAdd(e: React.ChangeEvent<HTMLInputElement>) {
     if (shareMode) return;
     const files = Array.from(e.target.files || []);
@@ -470,11 +470,6 @@ export default function PokaListApp() {
         have: false,
         imageDataUrl: dataUrl,
       });
-    }
-    // 동일 날짜에 기존 항목이 있다면, 새로 추가된 것들이 오른쪽(뒤쪽)에 오도록 끝에 붙인다
-    setItems((prev) => [...prev, ...created]);
-    e.target.value = "";
-  });
     }
     // 동일 날짜에 기존 항목이 있다면, 새로 추가된 것들이 오른쪽(뒤쪽)에 오도록 끝에 붙인다
     setItems((prev) => [...prev, ...created]);
@@ -598,13 +593,8 @@ export default function PokaListApp() {
       await ghPutContent("public/catalog.json", contentB64, "update catalog.json from admin panel");
       alert("catalog.json 커밋 완료! 1~2분 후 공유 링크에 반영됩니다.");
     } catch (e:any) { alert(e?.message || "catalog 커밋 실패"); }
-  }));
-      const payload = { v: 1, title: "포카 카탈로그", note: "", items: normalized };
-      const contentB64 = btoaUnicode(JSON.stringify(payload, null, 2));
-      await ghPutContent("public/catalog.json", contentB64, "update catalog.json from admin panel");
-      alert("catalog.json 커밋 완료! 1~2분 후 공유 링크에 반영됩니다.");
-    } catch (e:any) { alert(e?.message || "catalog 커밋 실패"); }
   }
+
   // confirm 대체(미리보기 등 환경에서 window.confirm 차단 대비)
   function safeConfirm(message: string) {
     try {
