@@ -121,6 +121,7 @@ const SAMPLE_ITEMS: Item[] = [
 ];
 
 // 이미지 리사이즈(최대 1200px) 후 dataURL 반환
+// (미사용) 필요 시 리사이즈 유틸
 async function resizeImageToDataURL(file: File, maxSize = 2000) {
   const reader = new FileReader();
   const load = new Promise((resolve) => {
@@ -432,8 +433,14 @@ export default function PokaListApp() {
   async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await resizeImageToDataURL(file, 1200);
+    // ✅ 원본 품질 유지: 리사이즈 없이 원본 DataURL 저장
+    const reader = new FileReader();
+    const dataUrl: string = await new Promise((resolve) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
     setForm((f) => ({ ...f, imageDataUrl: dataUrl }));
+  }));
   }
   async function handleMultiAdd(e: React.ChangeEvent<HTMLInputElement>) {
     if (shareMode) return;
@@ -446,7 +453,12 @@ export default function PokaListApp() {
 
     const created: Item[] = [];
     for (const f of files) {
-      const dataUrl = await resizeImageToDataURL(f, 1200);
+      // ✅ 원본 품질 유지: 리사이즈 없이 원본 DataURL 저장
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(f);
+      });
       created.push({
         id: newId(),
         title: f.name.replace(/\.[^.]+$/, ""),
@@ -458,6 +470,11 @@ export default function PokaListApp() {
         have: false,
         imageDataUrl: dataUrl,
       });
+    }
+    // 동일 날짜에 기존 항목이 있다면, 새로 추가된 것들이 오른쪽(뒤쪽)에 오도록 끝에 붙인다
+    setItems((prev) => [...prev, ...created]);
+    e.target.value = "";
+  });
     }
     // 동일 날짜에 기존 항목이 있다면, 새로 추가된 것들이 오른쪽(뒤쪽)에 오도록 끝에 붙인다
     setItems((prev) => [...prev, ...created]);
