@@ -121,7 +121,7 @@ const SAMPLE_ITEMS: Item[] = [
 ];
 
 // 이미지 리사이즈(최대 1200px) 후 dataURL 반환
-async function resizeImageToDataURL(file: File, maxSize = 1200) {
+async function resizeImageToDataURL(file: File, maxSize = 2000) {
   const reader = new FileReader();
   const load = new Promise((resolve) => {
     reader.onload = () => resolve(reader.result as string);
@@ -144,7 +144,7 @@ async function resizeImageToDataURL(file: File, maxSize = 1200) {
   canvas.width = w;
   canvas.height = h;
   ctx.drawImage(img, 0, 0, w, h);
-  return canvas.toDataURL("image/jpeg", 0.9);
+  return canvas.toDataURL("image/jpeg", 0.92);
 }
 
 // ===================== 메인 =====================
@@ -160,13 +160,18 @@ export default function PokaListApp() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const sharedParam = params.get("catalog");
   const srcParam = params.get("src");
+  const isEdit = params.get("edit") === "1"; // 편집 모드 강제
+  const isAdmin = params.get("admin") === "1"; // 관리자 패널 노출
   const sourceMode = !!srcParam; // 옵션 A: 외부 JSON을 읽는 모드
-  const shareMode = !!sharedParam || sourceMode;
+  // edit/admin이면 공유모드 강제 해제
+  const shareMode = ( !!sharedParam || sourceMode ) && !isEdit && !isAdmin;
 
   // GH Pages 기본 주소로 들어왔을 때 자동으로 catalog.json을 불러오도록 처리
   // (?src= 또는 ?catalog= 파라미터가 없으면 같은 경로의 catalog.json 존재 여부를 HEAD로 확인 후 리다이렉트)
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // edit/admin인 경우 자동 로드 우회 (보기 전용으로 강제 전환하지 않음)
+    if (isEdit || isAdmin) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("src") || params.get("catalog")) return; // 이미 공유 모드면 패스
 
@@ -207,6 +212,9 @@ export default function PokaListApp() {
 
   // 뷰/필터/그룹
   const [view, setView] = useState<"gallery" | "table">("gallery");
+  // 관리자 패널 상태
+  const [adminOpen, setAdminOpen] = useState<boolean>(isAdmin);
+  const [gh, setGh] = useState<{owner:string; repo:string; branch:string; token:string}>(() => ({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" }));
   const [query, setQuery] = useState("");
   const [groupBy, setGroupBy] = useState<"none" | "year" | "event" | "date" | "week" | "month">("year");
   const [eventFilter, setEventFilter] = useState<string>("all");
@@ -280,6 +288,28 @@ export default function PokaListApp() {
     })();
     return () => { aborted = true; };
   }, [sourceMode, srcParam]);
+
+  // ===== 편집/관리자 모드에서도 src가 있으면 한 번 로컬로 불러와서 편집 가능하게 =====
+  useEffect(() => {
+    if (!(isEdit || isAdmin)) return;
+    if (!srcParam) return; // src 없으면 패스
+    (async () => {
+      try {
+        const res = await fetch(srcParam, { cache: 'no-cache' });
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json();
+        const { v, items: list } = data || {};
+        if (v !== 1 || !Array.isArray(list)) throw new Error('bad format');
+        const fixed: Item[] = list.map((it: Item) => ({
+          ...it,
+          year: it.year || (it.purchaseDate ? yearOf(it.purchaseDate) : ""),
+        }));
+        setItems(fixed);
+      } catch (e) {
+        console.warn('[PokaList] 편집/관리자 모드 src import 실패', e);
+      }
+    })();
+  }, [isEdit, isAdmin, srcParam]);
 
   // 로컬 자동 저장
   useEffect(() => {
@@ -478,6 +508,86 @@ export default function PokaListApp() {
     if (!confirm("모든 데이터를 지울까요? (백업 권장)")) return;
     setItems([]);
   }
+  // ===== GitHub API (관리자: 바로 커밋) =====
+  const ghHeaders = useMemo(() => ({
+    Authorization: gh.token ? `Bearer ${gh.token}` : undefined,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }), [gh.token]);
+
+  async function ghGetSha(path: string): Promise<string|undefined> {
+    try {
+      const url = `https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(gh.branch)}`;
+      const res = await fetch(url, { headers: ghHeaders as any });
+      if (!res.ok) return undefined;
+      const json = await res.json();
+      return json?.sha as string | undefined;
+    } catch { return undefined; }
+  }
+  async function ghPutContent(path: string, contentBase64: string, message: string) {
+    if (!gh.token) { alert("토큰을 입력해주세요 (repo 권한 필요)"); return; }
+    const sha = await ghGetSha(path);
+    const url = `https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${encodeURIComponent(path)}`;
+    const body = { message, content: contentBase64, branch: gh.branch, sha } as any;
+    const res = await fetch(url, { method: "PUT", headers: { ...(ghHeaders as any), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!res.ok) { const t = await res.text(); throw new Error(`GitHub 커밋 실패: ${res.status} ${t}`); }
+    return res.json();
+  }
+  async function adminUploadImages(files: FileList | null) {
+    if (!files || !files.length) return;
+    try {
+      for (const f of Array.from(files)) {
+        // 파일을 base64로
+        const buf = await f.arrayBuffer();
+        let binary = ""; const bytes = new Uint8Array(buf);
+        for (let i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]);
+        const b64 = btoa(binary);
+        const path = `public/images/${f.name}`;
+        await ghPutContent(path, b64, `upload image ${f.name}`);
+      }
+      alert("이미지 업로드/커밋 완료!");
+    } catch (e:any) { alert(e?.message || "업로드 실패"); }
+  }
+  async function adminCommitCatalog() {
+    try {
+      const normalized: Item[] = [];
+      for (const d of items) {
+        const base: Item = {
+          id: d.id || newId(),
+          title: d.title || "",
+          purchaseDate: d.purchaseDate || "",
+          event: d.event || "",
+          vendor: d.vendor || "",
+          year: d.year || (d.purchaseDate ? yearOf(d.purchaseDate) : ""),
+          notes: d.notes || "",
+          have: !!d.have,
+        } as Item;
+
+        // dataURL만 있고 imageUrl이 없으면, 파일로 커밋 후 imageUrl 채움
+        if (d.imageDataUrl && !d.imageUrl) {
+          const fname = `poka_${base.id}.jpg`;
+          const b64 = (d.imageDataUrl.includes(',') ? d.imageDataUrl.split(',')[1] : d.imageDataUrl);
+          const path = `public/images/${fname}`;
+          await ghPutContent(path, b64, `upload image ${fname}`);
+          base.imageUrl = `images/${fname}`;
+        } else if (d.imageUrl) {
+          base.imageUrl = d.imageUrl;
+        }
+        normalized.push(base);
+      }
+
+      const payload = { v: 1, title: "포카 카탈로그", note: "", items: normalized };
+      const contentB64 = btoaUnicode(JSON.stringify(payload, null, 2));
+      await ghPutContent("public/catalog.json", contentB64, "update catalog.json from admin panel");
+      alert("catalog.json 커밋 완료! 1~2분 후 공유 링크에 반영됩니다.");
+    } catch (e:any) { alert(e?.message || "catalog 커밋 실패"); }
+  }));
+      const payload = { v: 1, title: "포카 카탈로그", note: "", items: normalized };
+      const contentB64 = btoaUnicode(JSON.stringify(payload, null, 2));
+      await ghPutContent("public/catalog.json", contentB64, "update catalog.json from admin panel");
+      alert("catalog.json 커밋 완료! 1~2분 후 공유 링크에 반영됩니다.");
+    } catch (e:any) { alert(e?.message || "catalog 커밋 실패"); }
+  }
   // confirm 대체(미리보기 등 환경에서 window.confirm 차단 대비)
   function safeConfirm(message: string) {
     try {
@@ -552,7 +662,7 @@ export default function PokaListApp() {
       {/* 상단 툴바 */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
         <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-bold">포카리스트 체크{shareMode ? " · 공유 체크 모드" : ""}</h1>
+          <h1 className="text-xl font-bold">포카리스트 체크{shareMode ? " · 공유 체크 모드" : (isEdit ? " · 편집 모드" : (isAdmin ? " · 관리자 모드" : ""))}</h1>
 
           <div className="flex items-center gap-2 ml-auto">
             {!shareMode && (
@@ -585,12 +695,19 @@ export default function PokaListApp() {
                 <button
                   onClick={() => {
                     const link = createShareLink();
-                    const notice = `공유 링크를 클립보드에 복사했어요!\n친구에게 보내서 각자 보유 체크를 할 수 있습니다. (이미지 미포함)`;
+                    const notice = `공유 링크를 클립보드에 복사했어요!
+친구에게 보내서 각자 보유 체크를 할 수 있습니다. (이미지 미포함)`;
                     if ((navigator as any).clipboard?.writeText) {
                       (navigator as any).clipboard.writeText(link).then(() => alert(notice)).catch(() => {
-                        alert(`${notice}\n\n복사가 실패했어요. 아래 링크를 직접 복사해주세요:\n${link}`);
+                        alert(`${notice}
+
+복사가 실패했어요. 아래 링크를 직접 복사해주세요:
+${link}`);
                       });
-                    } else { alert(`${notice}\n\n아래 링크를 복사해주세요:\n${link}`); }
+                    } else { alert(`${notice}
+
+아래 링크를 복사해주세요:
+${link}`); }
                   }}
                   className="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
                 >공유 링크(스냅샷) 생성</button>
@@ -617,14 +734,40 @@ ${link}`);
               <div className="text-sm text-slate-600">이 목록은 작성자가 공유한 카탈로그이며, <b>내 보유 체크는 이 브라우저에만 저장</b>돼요.</div>
             )}
 
-            <div className="h-6 w-px bg-slate-300" />
+            {isAdmin && (
+              <>
+                <div className="h-6 w-px bg-slate-300" />
+                <button onClick={() => setAdminOpen((v)=>!v)} className="px-3 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">관리자 패널 {adminOpen ? '닫기' : '열기'}</button>
+              </>
+            )}
 
             {!shareMode && (<>
-              <button onClick={loadSamples} className="px-3 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600">샘플 불러오기</button>
-              <button onClick={clearAll} className="px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200">전체 삭제</button>
+              <div className="h-6 w-px bg-slate-300" />
+              <span className="text-xs text-slate-500">모드: {isAdmin ? '관리자' : (isEdit ? '편집' : '로컬')}</span>
             </>)}
           </div>
         </div>
+        {adminOpen && (
+          <div className="mx-auto max-w-6xl px-4 pb-3">
+            <div className="p-3 rounded-xl border bg-purple-50 border-purple-200 space-y-2">
+              <div className="text-sm font-semibold text-purple-800">관리자: GitHub 바로 커밋</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <input className="px-3 py-2 rounded-lg border" placeholder="owner (예: gumming6-6)" value={gh.owner} onChange={(e)=>setGh({...gh, owner:e.target.value})} />
+                <input className="px-3 py-2 rounded-lg border" placeholder="repo (예: bogummy)" value={gh.repo} onChange={(e)=>setGh({...gh, repo:e.target.value})} />
+                <input className="px-3 py-2 rounded-lg border" placeholder="branch (예: main)" value={gh.branch} onChange={(e)=>setGh({...gh, branch:e.target.value})} />
+                <input className="px-3 py-2 rounded-lg border" placeholder="GitHub 토큰 (repo 권한)" value={gh.token} onChange={(e)=>setGh({...gh, token:e.target.value})} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 inline-flex items-center gap-2 cursor-pointer">
+                  <Upload size={16}/> 이미지 업로드(commit to public/images/)
+                  <input type="file" multiple className="hidden" onChange={(e)=>adminUploadImages(e.target.files)} />
+                </label>
+                <button onClick={adminCommitCatalog} className="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">catalog.json 커밋</button>
+                <div className="text-xs text-slate-600">커밋 후 1~2분 후 공유 링크에 반영됩니다.</div>
+              </div>
+            </div>
+          </div>
+        )}
         {shareMode && (
           <div className="mx-auto max-w-6xl px-4 pb-3 text-xs text-slate-600">
             <b>{shareMeta.title}</b> — {shareMeta.note} {sourceMode && (<span className="ml-2 text-emerald-700">(원본 JSON 실시간 반영 모드)</span>)}
