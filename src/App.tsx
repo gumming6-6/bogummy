@@ -9,8 +9,9 @@ import { Plus, Upload, Download, List, Grid as GridIcon, Search, Image as ImageI
       {/* 상단 대제목 */}
       <div className="bg-white text-center py-3 border-b border-slate-200">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="text-2xl md:text-3xl font-extrabold tracking-wide">BOGUMMY PHOTOCARD LIST❣️</div>
-        </div>
+          <div className="text-2xl md:text-3xl font-extrabold tracking-wide">
+  BOGUMMY PHOTOCARD LIST❣️ (LOCAL TEST)
+</div>
       </div>
 
       {/* 상단 툴바 */}
