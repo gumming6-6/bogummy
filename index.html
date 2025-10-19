@@ -5,27 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BOGUMMY PHOTOCARD</title>
 
-    <!-- 관리자 전용: 기본은 숨김 / ?admin=1 이면 표시 -->
+    <!-- 관리자 전용 기본 숨김 -->
     <style>
       .admin-only { display: none !important; visibility: hidden !important; }
-      .admin-on .admin-only { display: block !important; visibility: visible !important; }
+      .admin-on .admin-only { display: initial !important; visibility: visible !important; }
     </style>
 
-    <!-- 간단 토글: URL에 ?admin=1 있으면 관리자 UI 표시 -->
+    <!-- ✅ 로그인 없이: ?admin=1이면 바로 관리자 UI 노출 -->
     <script>
-      (function () {
-        const isAdminParam =
-          new URLSearchParams(location.search).get("admin") === "1";
-        if (isAdminParam) {
-          document.documentElement.classList.add("admin-on");
+      (() => {
+        const params = new URLSearchParams(location.search);
+        if (params.get('admin') === '1') {
+          document.documentElement.classList.add('admin-on');
         }
       })();
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = { theme: { extend: {} } };
-    </script>
+    <script>tailwind.config = { theme: { extend: {} } };</script>
   </head>
   <body>
     <div id="root"></div>
