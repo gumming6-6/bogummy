@@ -169,6 +169,48 @@ export default function PokaListApp() {
   async function ghApi(path: string, contentB64: string, message: string) {
     const { owner, repo, branch, token } = gh;
     if (!owner || !repo || !branch || !token) { alert("GitHub 정보와 토큰을 입력하세요."); return; }
+    const base = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+    // 최신 sha 조회 함수
+    const fetchSha = async () => {
+      const r = await fetch(`${base}?ref=${encodeURIComponent(branch)}`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (r.status === 200) {
+        const j = await r.json();
+        return j.sha as string;
+      }
+      return undefined; // 파일이 없으면 생성 모드
+    };
+
+    // 실제 PUT 함수
+    const putOnce = async (sha?: string) => {
+      const r = await fetch(base, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `token ${token}` },
+        body: JSON.stringify({ message, content: contentB64, branch, sha })
+      });
+      return r;
+    };
+
+    // 1차: 최신 sha 조회 후 시도
+    let sha = await fetchSha();
+    let res = await putOnce(sha);
+
+    // 409(sha mismatch 등) → sha 재조회 후 1회 재시도
+    if (res.status === 409) {
+      sha = await fetchSha();
+      res = await putOnce(sha);
+    }
+
+    if (!res.ok) {
+      let detail = "";
+      try { const j = await res.json(); detail = j?.message || ""; } catch {}
+      throw new Error(`GitHub API ${res.status}${detail ? `: ${detail}` : ""}`);
+    }
+
+    return res.json();
+  }
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
     let sha: string | undefined;
     const head = await fetch(`${url}?ref=${branch}`, { headers: { Authorization: `token ${token}` } });
