@@ -370,14 +370,14 @@ export default function PokaListApp() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* 상단 헤더 */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3">
           {/* 제목은 flex-1 로 왼쪽 정렬 / 버튼은 오른쪽으로 밀어냄 */}
           <div className="flex-1 min-w-0 text-2xl md:text-3xl font-extrabold tracking-wide whitespace-nowrap">
             BOGUMMY PHOTOCARD LIST❣️
           </div>
 
           {/* 버튼들이 줄바꿈 없이 한 줄에 정렬되도록 */}
-          <div className="flex items-center gap-2 ml-auto flex-nowrap overflow-x-auto">
+          <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={() => setView("gallery")}
               className={`p-2 rounded-lg ${
@@ -405,7 +405,7 @@ export default function PokaListApp() {
             )}
 
             {/* 관리자 전용: 새 항목/이미지 업로드/공유(src)/패널 열기 → admin-only로 숨김 */}
-            <div className="admin-only flex items-center gap-2 flex-nowrap">
+            <div className="admin-only flex items-center gap-2 ml-auto">
               <button
                 onClick={addNewItem}
                 className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700"
