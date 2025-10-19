@@ -38,67 +38,15 @@ export default function PokaListApp() {
   const shareMode = sourceMode && !isEdit && !isAdmin; // 공유 보기 전용
   useEffect(() => { document.title = "BOGUMMY PHOTOCARD"; }, []);
 
-  // ------ 상태 ------
-  const [view, setView] = useState<"gallery"|"table">("gallery");
-  const [items, setItems] = useState<any[]>([]);
-  const [loadError, setLoadError] = useState<string>("");
-  const [filter, setFilter] = useState({ year: "전체", event: "전체", search: "" });
-  const idxRef = useRef(0);
-
-  // 공유 모드 개인 보유 체크(브라우저별 로컬 저장)
-  const shareKey = useMemo(() => `pokaShareChecks:${srcParam||"local"}`, [srcParam]);
-  const [myChecks, setMyChecks] = useState<Record<string, boolean>>({});
-  useEffect(() => {
-    try { const v = localStorage.getItem(shareKey); if (v) setMyChecks(JSON.parse(v)); } catch {}
-  }, [shareKey]);
-  useEffect(() => {
-    try { localStorage.setItem(shareKey, JSON.stringify(myChecks)); } catch {}
-  }, [shareKey, myChecks]);
-
-  // 관리자 패널
-  const [adminOpen, setAdminOpen] = useState<boolean>(isAdmin);
-  const [gh, setGh] = useState({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" });
-
-  // 상세 모달
-  const [detail, setDetail] = useState<any | null>(null);
-
-  // ------ 데이터 로드 ------
-  useEffect(() => {
-    if (!sourceMode) return;
-    let aborted = false;
-    (async () => {
-      try {
-        setLoadError("");
-        const r = await fetch(srcParam, { cache: "no-cache" });
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const data = await r.json();
-        const raw: any[] = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
-        const normalized = raw.map((it: any, i: number) => ({
-          id: it.id || `${Date.now().toString(36)}-${i}`,
-          title: it.title || it.name || "",
-          event: it.event || "",
-          vendor: it.vendor || it.buyer || "",
-          notes: it.notes || it.memo || "",
-          purchaseDate: it.purchaseDate || it.date || "",
-          year: it.year || yearFrom(it.purchaseDate || it.date),
-          imageUrl: it.image || it.imageUrl || (it.imageDataUrl ? it.imageDataUrl : ""),
-          have: !!it.have,
-          __idx: i,
-        }));
-        if (!aborted) setItems(normalized);
-      } catch (e) {
-        console.error(e);
-        if (!aborted) setLoadError("src JSON을 불러오지 못했습니다. URL과 CORS 설정(GitHub Pages 권장)을 확인해주세요.");
-      }
-    })();
-    return () => { aborted = true; };
-  }, [sourceMode, srcParam]);
-
-  // 관리자/편집 모드에서 로컬 임시 저장
-  useEffect(() => {
-    if (!(isAdmin || isEdit)) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
-  }, [items, isAdmin, isEdit]);
+  // ------ 상태 ------$1
+  // 상세 모달용 이미지 파일 입력 ref + 선택 핸들러(이미지 클릭으로 선택)
+  const detailFileRef = useRef<HTMLInputElement | null>(null);
+  const onDetailImageSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const f = files[0];
+    const url = URL.createObjectURL(f);
+    setDetail((d:any) => d ? { ...d, imageUrl: url, __file: f } : d);
+  };
 
   // ------ 필터링/그룹/정렬 ------
   const filtered = useMemo(() => {
@@ -129,18 +77,24 @@ export default function PokaListApp() {
   const eventOptions = useMemo(() => ["전체", ...Array.from(new Set(items.map((c) => c.event).filter(Boolean)))], [items]);
   const yearOptions = useMemo(() => ["전체", ...Array.from(new Set(items.map((c) => c.year).filter(Boolean))).sort((a:any,b:any)=>Number(a)-Number(b))], [items]);
 
-  // ------ 공유/관리자 공통 보유 토글 ------
-  function toggleHave(it: any, checked: boolean) {
-    if (shareMode) {
-      setMyChecks((prev) => ({ ...prev, [it.id]: checked }));
-      setDetail((d) => (d && d.id === it.id ? { ...d, have: checked } : d));
-    } else {
-      setItems((prev) => prev.map((p) => (p.id === it.id ? { ...p, have: checked } : p)));
-      setDetail((d) => (d && d.id === it.id ? { ...d, have: checked } : d));
-    }
+  // ------ 공유/관리자 공통 보유 토글 ------$1// ------ 관리자 기능: 새 항목 추가 ------
+  function addNewItem() {
+    const it = {
+      id: `${Date.now().toString(36)}-${idxRef.current++}`,
+      title: "",
+      event: "",
+      vendor: "",
+      notes: "",
+      purchaseDate: "",
+      year: "",
+      imageUrl: "",
+      have: false,
+      __idx: idxRef.current,
+    };
+    setItems((prev)=>[...prev, it]);
+    setDetail(it); // 즉시 편집 모달 열기
   }
 
-  // ------ 관리자 기능: 새 항목 추가 ------$1
   // 다중 이미지 한 번에 추가(로컬 임시) — 파일당 새 항목 생성 후 모달로 바로 편집 가능
   function handleMultiAdd(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
