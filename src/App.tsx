@@ -140,22 +140,43 @@ export default function PokaListApp() {
     }
   }
 
-  // ------ 관리자 기능: 새 항목 추가 ------
-  function addNewItem() {
-    const tmp = {
-      id: `${Date.now().toString(36)}-${idxRef.current++}`,
-      title: "",
-      event: "",
-      vendor: "",
-      notes: "",
-      purchaseDate: "",
-      year: "",
-      imageUrl: "",
-      have: false,
-      __idx: idxRef.current,
-    };
-    setItems((prev) => [...prev, tmp]);
-    setDetail(tmp); // 바로 편집하도록 모달 오픈
+  // ------ 관리자 기능: 새 항목 추가 ------$1
+  // 다중 이미지 한 번에 추가(로컬 임시) — 파일당 새 항목 생성 후 모달로 바로 편집 가능
+  function handleMultiAdd(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    let lastItem: any | null = null;
+    setItems((prev) => {
+      const next = [...prev];
+      files.forEach((f) => {
+        const url = URL.createObjectURL(f);
+        const it = {
+          id: `${Date.now().toString(36)}-${idxRef.current++}`,
+          title: "",
+          event: "",
+          vendor: "",
+          notes: "",
+          purchaseDate: "",
+          year: "",
+          imageUrl: url,
+          __file: f,
+          have: false,
+          __idx: idxRef.current,
+        };
+        next.push(it);
+        lastItem = it;
+      });
+      return next;
+    });
+    if (lastItem) setDetail(lastItem);
+  }
+
+  // 공유 링크 만들기
+  function createSrcShareLink() {
+    const base = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
+    const src = srcParam || `${window.location.origin}${window.location.pathname}catalog.json`;
+    const url = `${base}?src=${encodeURIComponent(src)}`;
+    navigator.clipboard?.writeText(url).then(()=>alert('공유 링크를 클립보드에 복사했어요!'));
   }
 
   // ------ 관리자 기능: 카드 삭제 ------
@@ -211,18 +232,6 @@ export default function PokaListApp() {
 
     return res.json();
   }
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    let sha: string | undefined;
-    const head = await fetch(`${url}?ref=${branch}`, { headers: { Authorization: `token ${token}` } });
-    if (head.status === 200) { const j = await head.json(); sha = j.sha; }
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `token ${token}` },
-      body: JSON.stringify({ message, content: contentB64, branch, sha })
-    });
-    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    return res.json();
-  }
 
   async function adminUploadImages(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
@@ -264,12 +273,7 @@ export default function PokaListApp() {
               <div className="text-sm text-slate-600 ml-2 truncate">보유 체크 현황은 이 브라우저에만 저장됩니다.</div>
             ) : (
               <>
-                <label className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700 cursor-pointer">
-                  <Plus size={14} /> 새 항목
-                  <input type="file" className="hidden" onChange={(e)=>{ /* 새 항목은 파일 필요 없음 */ }} />
-                </label>
-                <button onClick={addNewItem} className="hidden" aria-hidden /> {/* 접근성용 더미 */}
-                <button onClick={addNewItem} className="flex items-center gap-1 bg-blue-600/90 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
+                <button onClick={addNewItem} className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
                   <Plus size={14} /> 새 항목
                 </button>
                 <label className="flex items-center gap-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm hover:bg-slate-800 cursor-pointer">
