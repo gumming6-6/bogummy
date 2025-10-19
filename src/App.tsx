@@ -1,6 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Upload, List, Grid as GridIcon, Search, Image as ImageIcon, X, Link as LinkIcon, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 
+// ---- helpers ----
+const yearFrom = (d?: string) => {
+  if (!d) return "";
+  const t = new Date(d);
+  return isNaN(t.getTime()) ? "" : String(t.getFullYear());
+};
+const byDateAsc = (a: any, b: any) => {
+  const da = a.purchaseDate || a.date || "";
+  const db = b.purchaseDate || b.date || "";
+  if (!da && !db) return 0;
+  if (!da) return 1;
+  if (!db) return -1;
+  const diff = da.localeCompare(db);
+  if (diff !== 0) return diff;
+  return (a.__idx ?? 0) - (b.__idx ?? 0);
+};
+
 /** 수정 요약
  * 1) 상세 모달의 이벤트/연도 입력을 드롭다운으로 복원
  * 2) 관리자 패널 상단 버튼 정렬(flex wrap) 문제 해결
@@ -15,6 +32,8 @@ export default function PokaListApp() {
   const shareMode = !!srcParam && !isAdmin && !isEdit;
 
   const [items, setItems] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState("");
+  const [filter, setFilter] = useState({ search: "", event: "전체", year: "전체" });
   const [detail, setDetail] = useState<any|null>(null);
   const [adminOpen, setAdminOpen] = useState(isAdmin);
   const [gh, setGh] = useState({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" });
@@ -23,6 +42,64 @@ export default function PokaListApp() {
   const yearOptions = useMemo(() => ["", "2023", "2024", "2025"], []);
 
   useEffect(()=>{ document.title = "BOGUMMY PHOTOCARD" }, []);
+
+  // 데이터 로드: srcParam 사용 시 외부 catalog.json에서 불러오기
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setLoadError("");
+        if (!srcParam) return;
+        const r = await fetch(srcParam, { cache: "no-cache" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        const raw: any[] = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+        const norm = raw.map((it: any, i: number) => ({
+          id: it.id || `${Date.now().toString(36)}-${i}`,
+          title: it.title || it.name || "",
+          event: it.event || it.group || "",
+          vendor: it.vendor || it.buyer || "",
+          notes: it.notes || it.memo || "",
+          purchaseDate: it.purchaseDate || it.date || "",
+          year: it.year || yearFrom(it.purchaseDate || it.date),
+          imageUrl: it.image || it.imageUrl || it.imageDataUrl || "",
+          have: !!it.have,
+          __idx: i,
+        }));
+        if (!abort) setItems(norm);
+      } catch (e) {
+        console.error(e);
+        if (!abort) setLoadError("목록을 불러오지 못했습니다. URL/CORS를 확인해주세요.");
+      }
+    })();
+    return () => { abort = true; };
+  }, [srcParam]);
+
+  // 필터링 + 연도별 그룹
+  const filtered = React.useMemo(() => {
+    const q = filter.search.trim().toLowerCase();
+    return items.filter((c) => {
+      const okEvent = filter.event === "전체" || c.event === filter.event;
+      const okYear = filter.year === "전체" || c.year === filter.year;
+      const hay = `${c.title} ${c.event} ${c.vendor} ${c.notes} ${c.purchaseDate}`.toLowerCase();
+      const okSearch = !q || hay.includes(q);
+      return okEvent && okYear && okSearch;
+    });
+  }, [items, filter]);
+  const grouped = React.useMemo(() => {
+    const m: Record<string, any[]> = {};
+    filtered.forEach((c) => { const y = c.year || "연도 미지정"; (m[y] ||= []).push(c); });
+    Object.keys(m).forEach((y) => m[y].sort(byDateAsc));
+    return m;
+  }, [filtered]);
+  const orderedYears = React.useMemo(() => {
+    const ks = Object.keys(grouped);
+    const kn = ks.filter(k=>k!=="연도 미지정").map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b).map(String);
+    return [...kn, ...(ks.includes("연도 미지정")?["연도 미지정"]:[])];
+  }, [grouped]);
+
+  const eventOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.event).filter(Boolean)))], [items]);
+  const yearOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.year).filter(Boolean))).sort((a:any,b:any)=>Number(a)-Number(b))], [items]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -60,6 +137,53 @@ export default function PokaListApp() {
           </div>
         )}
       </header>
+
+      {/* 필터 바 + 목록 */}
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        {/* 필터 */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex items-center border rounded-lg px-2 bg-white w-full md:w-80">
+            <Search size={18} className="text-slate-400" />
+            <input type="text" placeholder="검색: 제목/이벤트/구매처/연도/메모" value={filter.search} onChange={(e)=>setFilter({...filter, search:e.target.value})} className="w-full px-2 py-1 outline-none text-sm bg-transparent" />
+          </div>
+          <select value={filter.event} onChange={(e)=>setFilter({...filter, event:e.target.value})} className="border rounded-lg px-2 py-1 text-sm">
+            {eventOptions.map((v)=>(<option key={v}>{v}</option>))}
+          </select>
+          <select value={filter.year} onChange={(e)=>setFilter({...filter, year:e.target.value})} className="border rounded-lg px-2 py-1 text-sm">
+            {yearOptions.map((v)=>(<option key={v}>{v}</option>))}
+          </select>
+        </div>
+
+        {loadError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">{loadError}</div>
+        )}
+
+        {/* 연도별 그룹 */}
+        {orderedYears.map((y) => (
+          <section key={y} className="mb-8">
+            <h2 className="text-lg font-semibold mb-3 border-b border-slate-300 pb-1">{y}</h2>
+            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(160px, 1fr))` }}>
+              {grouped[y]?.map((card: any, i: number) => (
+                <article key={card.id || i} className="bg-white shadow rounded-xl p-2 border border-slate-200 cursor-pointer" onClick={()=>setDetail(card)}>
+                  <div className="w-full rounded-xl border border-slate-200 overflow-hidden aspect-[2/3] bg-white">
+                    {card.imageUrl ? (
+                      <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full grid place-items-center text-slate-300"><ImageIcon/></div>
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
+                  <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        {items.length === 0 && !loadError && (
+          <div className="text-center text-slate-400">카드가 없습니다.</div>
+        )}
+      </main>
 
       {/* 상세 모달 */}
       {detail && (
