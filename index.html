@@ -4,6 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BOGUMMY PHOTOCARD</title>
+
+    <!-- 기본 숨김: 관리자 전용 요소는 기본적으로 숨김 -->
+    <style>
+      .admin-only { display: none !important; }
+      /* 인증되면 <html>에 admin-on 클래스를 붙여 관리자 전용 요소 노출 */
+      .admin-on .admin-only { display: initial !important; } /* 필요하면 block */
+    </style>
+
+    <!-- 인증 게이트: admin=1 일 때만 권한 확인 후 노출/리다이렉트 -->
+    <script>
+      (async () => {
+        const params = new URLSearchParams(location.search);
+        const isAdminMode = params.get('admin') === '1';
+        if (!isAdminMode) return; // 공유용 링크는 그냥 보기 전용
+
+        try {
+          const r = await fetch('https://bogummy-auth.vercel.app/api/auth/me', {
+            credentials: 'include' // 쿠키 동반 (필수)
+          });
+          const data = await r.json();
+
+          if (data.ok) {
+            // 인증 통과 → 관리자 UI 노출
+            document.documentElement.classList.add('admin-on');
+          } else {
+            // 인증 실패 → 로그인 후 현재 페이지로 복귀
+            const ret = encodeURIComponent(location.href);
+            location.href = `https://bogummy-auth.vercel.app/api/auth/login?return=${ret}`;
+          }
+        } catch (e) {
+          // 네트워크 오류 등 → 로그인으로 유도
+          const ret = encodeURIComponent(location.href);
+          location.href = `https://bogummy-auth.vercel.app/api/auth/login?return=${ret}`;
+        }
+      })();
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { theme: { extend: {} } };</script>
   </head>
