@@ -216,24 +216,39 @@ export default function PokaListApp() {
         </div>
       </div>
 
-      {/* 상단 툴바 (요청사항 반영) */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3">
-          {shareMode ? (
-            // 공유 모드: 제목/부제 숨김 + 안내 문구만 표시
-            <div className="text-sm text-slate-600">보유 체크 현황은 이 브라우저에만 저장됩니다.</div>
-          ) : (
-            // 일반/편집/관리자 모드: 기존 헤더 유지(간단형)
-            <h1 className="text-xl font-bold">포카리스트 체크{isEdit ? " · 편집 모드" : (isAdmin ? " · 관리자 모드" : "")}</h1>
-          )}
+{/* 상단 툴바 (공유 모드에선 문구 숨김) */}
+<header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+  <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3">
+    {shareMode ? (
+      // 공유 모드: 제목/부제 숨기고 안내 한 줄만 표시
+      <div className="text-sm text-slate-600">보유 체크 현황은 이 브라우저에만 저장됩니다.</div>
+    ) : (
+      // 일반/편집/관리자 모드: 기존 헤더 유지
+      <h1 className="text-xl font-bold">
+        포카리스트 체크{isEdit ? " · 편집 모드" : (isAdmin ? " · 관리자 모드" : "")}
+      </h1>
+    )}
 
-          {/* 우측: 보기 토글 아이콘은 항상 보이게 유지 */}
-          <div className="flex items-center gap-2 ml-auto">
-            <button onClick={() => setView("gallery")} className={`p-2 rounded-lg ${view === "gallery" ? "bg-slate-200" : "hover:bg-slate-100"}`} title="갤러리 보기"><GridIcon size={18} /></button>
-            <button onClick={() => setView("table")} className={`p-2 rounded-lg ${view === "table" ? "bg-slate-200" : "hover:bg-slate-100"}`} title="표 보기"><List size={18} /></button>
-          </div>
-        </div>
-      </header>
+    {/* 우측: 보기 토글 아이콘은 항상 보이게 유지 */}
+    <div className="flex items-center gap-2 ml-auto">
+      <button
+        onClick={() => setView("gallery")}
+        className={`p-2 rounded-lg ${view === "gallery" ? "bg-slate-200" : "hover:bg-slate-100"}`}
+        title="갤러리 보기"
+      >
+        <GridIcon size={18} />
+      </button>
+      <button
+        onClick={() => setView("table")}
+        className={`p-2 rounded-lg ${view === "table" ? "bg-slate-200" : "hover:bg-slate-100"}`}
+        title="표 보기"
+      >
+        <List size={18} />
+      </button>
+    </div>
+  </div>
+</header>
+
 
       {/* 검색/크기 조절 */}
       <div className="mx-auto max-w-6xl px-4 py-4">
