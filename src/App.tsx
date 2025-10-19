@@ -13,15 +13,41 @@ export default function PokaListApp() {
   }, []);
 
   const [view, setView] = useState("gallery");
-  const [cards, setCards] = useState([]);
+  const [cards, setCards] = useState<any[]>([]);
   const [filter, setFilter] = useState({ year: "전체", event: "전체", search: "" });
+  const [loadError, setLoadError] = useState<string>("");
 
+  // srcParam(catalog.json) 불러오고 스키마 정규화
   useEffect(() => {
     if (!srcParam) return;
-    fetch(srcParam)
-      .then((res) => res.json())
-      .then((data) => setCards(data || []))
-      .catch(() => setCards([]));
+    let aborted = false;
+    (async () => {
+      try {
+        setLoadError("");
+        const res = await fetch(srcParam, { cache: "no-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        // 지원 스키마: ①배열 루트 ②{v,title,note,items:[...]}
+        const raw = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
+        const normalized = raw.map((it: any) => ({
+          title: it.title || it.name || "",
+          event: it.event || "",
+          year: it.year || (it.purchaseDate ? String(new Date(it.purchaseDate).getFullYear()) : ""),
+          image: it.image || it.imageUrl || it.imageDataUrl || "",
+          memo: it.notes || it.memo || "",
+          buyer: it.vendor || it.buyer || "",
+          date: it.purchaseDate || it.date || "",
+        }));
+        if (!aborted) setCards(normalized);
+      } catch (e:any) {
+        console.error("catalog load failed", e);
+        if (!aborted) {
+          setLoadError("src JSON을 불러오지 못했습니다. URL과 CORS 설정을 확인해주세요.");
+          setCards([]);
+        }
+      }
+    })();
+    return () => { aborted = true; };
   }, [srcParam]);
 
   const filtered = cards.filter((c) => {
@@ -96,6 +122,11 @@ export default function PokaListApp() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8">
+        {loadError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">
+            {loadError}
+          </div>
+        )}
         {Object.keys(grouped)
           .sort((a, b) => (b === "연도 미지정" ? -1 : b.localeCompare(a)))
           .map((year) => (
