@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Upload, Download, List, Grid as GridIcon, Search, Image as ImageIcon, X, Share2, Copy, Link as LinkIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Upload, Download, List, Grid as GridIcon, Search, Image as ImageIcon, X, Share2, Copy, Link as LinkIcon, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 
-/**
- * ✅ 복원 버전
- * - 공유용: 상단 큰 제목 유지, 툴바 문구는 "보유 체크 현황은 이 브라우저에만 저장됩니다." + 보기 아이콘만 표시
- * - 관리자용: 다중 이미지 추가 / JSON 주소로 공유 / 이미지 업로드(commit) / catalog.json 커밋 등 관리자 패널 복구
- * - 연도 그룹: 2023 → 2024 → 2025 ... 오름차순 (연도 미지정은 맨 뒤)
- * - 썸네일 클릭 시 상세 모달(이전/다음) 복원
+/** 복원 + 보강 버전
+ * 1) 공유용: 카드 아래에서도 보유 체크 가능(브라우저 로컬 저장), 상세 모달에도 그대로 노출
+ * 2) 관리자용: "새 항목" 버튼 복귀 + 각 카드에 수정/삭제 아이콘(오버레이) 복귀
+ * 3) 상세 모달: 이전/다음 네비게이션을 이미지 좌/우에 플로팅 버튼으로 배치 (이전처럼)
+ * 4) 연도 그룹: 2023 → 2024 → 2025 … 오름차순, 같은 날짜면 등록 순서대로 오른쪽에 추가
  */
 
 // ---------- 유틸 ----------
@@ -19,10 +18,14 @@ const byDateAsc = (a: any, b: any) => {
   if (!db) return -1;
   const diff = da.localeCompare(db);
   if (diff !== 0) return diff;
-  // 같은 날짜면 등록 순서대로 오른쪽으로 붙도록 index 비교
-  return (a.__idx ?? 0) - (b.__idx ?? 0);
+  return (a.__idx ?? 0) - (b.__idx ?? 0); // 같은 날짜는 등록 순서
 };
 const safeB64 = (str: string) => btoa(unescape(encodeURIComponent(str)));
+const yearFrom = (d?: string) => {
+  if (!d) return "";
+  const t = new Date(d);
+  return isNaN(t.getTime()) ? "" : String(t.getFullYear());
+};
 
 export default function PokaListApp() {
   // ------ URL 파라미터 ------
@@ -33,7 +36,6 @@ export default function PokaListApp() {
   const isAdmin = params.get("admin") === "1";
   const sourceMode = !!srcParam; // 외부 JSON 사용 여부
   const shareMode = sourceMode && !isEdit && !isAdmin; // 공유 보기 전용
-
   useEffect(() => { document.title = "BOGUMMY PHOTOCARD"; }, []);
 
   // ------ 상태 ------
@@ -42,6 +44,16 @@ export default function PokaListApp() {
   const [loadError, setLoadError] = useState<string>("");
   const [filter, setFilter] = useState({ year: "전체", event: "전체", search: "" });
   const idxRef = useRef(0);
+
+  // 공유 모드 개인 보유 체크(브라우저별 로컬 저장)
+  const shareKey = useMemo(() => `pokaShareChecks:${srcParam||"local"}`, [srcParam]);
+  const [myChecks, setMyChecks] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try { const v = localStorage.getItem(shareKey); if (v) setMyChecks(JSON.parse(v)); } catch {}
+  }, [shareKey]);
+  useEffect(() => {
+    try { localStorage.setItem(shareKey, JSON.stringify(myChecks)); } catch {}
+  }, [shareKey, myChecks]);
 
   // 관리자 패널
   const [adminOpen, setAdminOpen] = useState<boolean>(isAdmin);
@@ -68,7 +80,7 @@ export default function PokaListApp() {
           vendor: it.vendor || it.buyer || "",
           notes: it.notes || it.memo || "",
           purchaseDate: it.purchaseDate || it.date || "",
-          year: it.year || (it.purchaseDate ? String(new Date(it.purchaseDate).getFullYear()) : (it.date ? String(new Date(it.date).getFullYear()) : "")),
+          year: it.year || yearFrom(it.purchaseDate || it.date),
           imageUrl: it.image || it.imageUrl || (it.imageDataUrl ? it.imageDataUrl : ""),
           have: !!it.have,
           __idx: i,
@@ -100,17 +112,9 @@ export default function PokaListApp() {
     });
   }, [items, filter]);
 
-  const years = useMemo(() => {
-    const ys = [...new Set(filtered.map((c) => c.year).filter(Boolean))]
-      .map((y) => Number(y))
-      .filter((n) => !isNaN(n))
-      .sort((a, b) => a - b); // 오름차순 2023→
-    return ys.map(String);
-  }, [filtered]);
-
   const grouped = useMemo(() => {
     const map: Record<string, any[]> = {};
-    filtered.forEach((c) => { const y = c.year || "연도 미지정"; (map[y] ||= []).push(c); });
+    filtered.forEach((c, i) => { const y = c.year || "연도 미지정"; (map[y] ||= []).push({ ...c, __i: i }); });
     Object.keys(map).forEach((y) => map[y].sort(byDateAsc));
     return map;
   }, [filtered]);
@@ -125,45 +129,47 @@ export default function PokaListApp() {
   const eventOptions = useMemo(() => ["전체", ...Array.from(new Set(items.map((c) => c.event).filter(Boolean)))], [items]);
   const yearOptions = useMemo(() => ["전체", ...Array.from(new Set(items.map((c) => c.year).filter(Boolean))).sort((a:any,b:any)=>Number(a)-Number(b))], [items]);
 
-  // ------ 관리자 기능: 다중 이미지 추가(로컬) ------
-  function handleMultiAdd(files: FileList | null) {
-    if (!files) return;
-    const arr: any[] = [];
-    Array.from(files).forEach((f) => {
-      const url = URL.createObjectURL(f);
-      arr.push({
-        id: `${Date.now().toString(36)}-${idxRef.current++}`,
-        title: f.name.replace(/\.[^.]+$/, ""),
-        event: "",
-        vendor: "",
-        notes: "",
-        purchaseDate: "",
-        year: "",
-        imageUrl: url,
-        have: false,
-        __idx: idxRef.current,
-        __file: f, // 업로드용 보관
-      });
-    });
-    setItems((prev) => [...prev, ...arr]);
+  // ------ 공유/관리자 공통 보유 토글 ------
+  function toggleHave(it: any, checked: boolean) {
+    if (shareMode) {
+      setMyChecks((prev) => ({ ...prev, [it.id]: checked }));
+      setDetail((d) => (d && d.id === it.id ? { ...d, have: checked } : d));
+    } else {
+      setItems((prev) => prev.map((p) => (p.id === it.id ? { ...p, have: checked } : p)));
+      setDetail((d) => (d && d.id === it.id ? { ...d, have: checked } : d));
+    }
   }
 
-  // ------ 관리자 기능: 공유 링크 만들기(src) ------
-  function createSrcShareLink(custom?: string) {
-    const url = custom || srcParam;
-    if (!url) { alert("현재 페이지는 src가 없어 링크를 만들 수 없습니다."); return; }
-    const base = window.location.origin + window.location.pathname;
-    const link = `${base}?src=${encodeURIComponent(url)}`;
-    if ((navigator as any).clipboard?.writeText) (navigator as any).clipboard.writeText(link).then(()=>alert("src 링크를 복사했습니다."));
-    else prompt("아래 링크를 복사하세요", link);
+  // ------ 관리자 기능: 새 항목 추가 ------
+  function addNewItem() {
+    const tmp = {
+      id: `${Date.now().toString(36)}-${idxRef.current++}`,
+      title: "",
+      event: "",
+      vendor: "",
+      notes: "",
+      purchaseDate: "",
+      year: "",
+      imageUrl: "",
+      have: false,
+      __idx: idxRef.current,
+    };
+    setItems((prev) => [...prev, tmp]);
+    setDetail(tmp); // 바로 편집하도록 모달 오픈
   }
 
-  // ------ 관리자 기능: GitHub 커밋 (이미지 업로드/카탈로그) ------
+  // ------ 관리자 기능: 카드 삭제 ------
+  function removeItem(id: string) {
+    if (!confirm("정말 삭제할까요?")) return;
+    setItems((prev) => prev.filter((x) => x.id !== id));
+    setDetail((d) => (d && d.id === id ? null : d));
+  }
+
+  // ------ 관리자 기능: GitHub API ------
   async function ghApi(path: string, contentB64: string, message: string) {
     const { owner, repo, branch, token } = gh;
     if (!owner || !repo || !branch || !token) { alert("GitHub 정보와 토큰을 입력하세요."); return; }
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    // sha 조회(있으면 업데이트)
     let sha: string | undefined;
     const head = await fetch(`${url}?ref=${branch}`, { headers: { Authorization: `token ${token}` } });
     if (head.status === 200) { const j = await head.json(); sha = j.sha; }
@@ -193,17 +199,11 @@ export default function PokaListApp() {
 
   async function adminCommitCatalog() {
     try {
-      const payload = { v: 1, title: "BOGUMMY", note: "", items: items.map(({__file, __idx, ...rest}) => rest) };
+      const payload = { v: 1, title: "BOGUMMY", note: "", items: items.map(({__i, __idx, ...rest}) => rest) };
       const b64 = safeB64(JSON.stringify(payload, null, 2));
       await ghApi("public/catalog.json", b64, "update catalog.json");
       alert("catalog.json 커밋 완료 (1~2분 후 반영)");
     } catch (e:any) { alert(`카탈로그 커밋 실패: ${e?.message || e}`); }
-  }
-
-  // ------ 상세 모달 내 보유 토글 ------
-  function toggleHave(it: any, checked: boolean) {
-    setItems((prev) => prev.map((p) => (p.id === it.id ? { ...p, have: checked } : p)));
-    setDetail((d) => (d && d.id === it.id ? { ...d, have: checked } : d));
   }
 
   // ------ 렌더 ------
@@ -223,7 +223,15 @@ export default function PokaListApp() {
             ) : (
               <>
                 <label className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700 cursor-pointer">
-                  <Plus size={14} /> 다중 이미지 추가
+                  <Plus size={14} /> 새 항목
+                  <input type="file" className="hidden" onChange={(e)=>{ /* 새 항목은 파일 필요 없음 */ }} />
+                </label>
+                <button onClick={addNewItem} className="hidden" aria-hidden /> {/* 접근성용 더미 */}
+                <button onClick={addNewItem} className="flex items-center gap-1 bg-blue-600/90 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
+                  <Plus size={14} /> 새 항목
+                </button>
+                <label className="flex items-center gap-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm hover:bg-slate-800 cursor-pointer">
+                  <Upload size={14} /> 다중 이미지 추가
                   <input type="file" accept="image/*" multiple className="hidden" onChange={(e)=>handleMultiAdd(e.target.files)} />
                 </label>
                 <button onClick={() => createSrcShareLink()} className="flex items-center gap-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-amber-600"><LinkIcon size={14}/> JSON 주소로 공유(src)</button>
@@ -283,19 +291,44 @@ export default function PokaListApp() {
           <section key={year} className="mb-8">
             <h2 className="text-lg font-semibold mb-3 border-b border-slate-300 pb-1">{year}</h2>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(160px, 1fr))` }}>
-              {grouped[year]?.map((card, i) => (
-                <article key={card.id || i} className="bg-white shadow rounded-xl p-2 border border-slate-200">
-                  <div className="w-full rounded-xl border border-slate-200 overflow-hidden aspect-[2/3] bg-white cursor-pointer" onClick={()=>setDetail(card)}>
-                    {card.imageUrl ? (
-                      <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full grid place-items-center text-slate-300"><ImageIcon/></div>
-                    )}
-                  </div>
-                  <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
-                  <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
-                </article>
-              ))}
+              {grouped[year]?.map((card, i) => {
+                const have = shareMode ? !!myChecks[card.id] : !!card.have;
+                return (
+                  <article key={card.id || i} className="bg-white shadow rounded-xl p-2 border border-slate-200">
+                    <div className="relative">
+                      <div className="w-full rounded-xl border border-slate-200 overflow-hidden aspect-[2/3] bg-white cursor-pointer" onClick={()=>setDetail(card)}>
+                        {card.imageUrl ? (
+                          <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full grid place-items-center text-slate-300"><ImageIcon/></div>
+                        )}
+                      </div>
+                      {/* 관리자: 카드 오버레이 수정/삭제 */}
+                      {!shareMode && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button className="p-1.5 rounded bg-white/90 hover:bg-white shadow" title="수정" onClick={(e)=>{e.stopPropagation(); setDetail(card);}}>
+                            <Pencil size={14}/>
+                          </button>
+                          <button className="p-1.5 rounded bg-white/90 hover:bg-white shadow" title="삭제" onClick={(e)=>{e.stopPropagation(); removeItem(card.id);}}>
+                            <Trash2 size={14}/>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
+                    <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
+                    {/* 공유/관리자 공통 보유 체크 (카드 하단) */}
+                    <label className="mt-1 inline-flex items-center gap-2 text-xs select-none">
+                      <input
+                        type="checkbox"
+                        checked={have}
+                        onChange={(e)=>toggleHave(card, e.target.checked)}
+                        onClick={(e)=>e.stopPropagation()}
+                      /> 보유
+                    </label>
+                  </article>
+                );
+              })}
             </div>
           </section>
         ))}
@@ -313,35 +346,59 @@ export default function PokaListApp() {
               <div className="font-semibold">상세 정보</div>
               <button className="p-1 rounded hover:bg-slate-100" onClick={()=>setDetail(null)}><X size={18} /></button>
             </div>
-            <div className="p-3 space-y-2">
-              <div className="w-full rounded-xl border overflow-hidden aspect-[2/3] bg-slate-50 grid place-items-center">
+            <div className="p-3 space-y-3">
+              <div className="relative rounded-xl border overflow-hidden aspect-[2/3] bg-slate-50 grid place-items-center">
                 {detail.imageUrl ? (
                   <img src={detail.imageUrl} alt={detail.title} className="w-full h-full object-cover" />
                 ) : (<ImageIcon className="text-slate-300" />)}
+                {/* 좌/우 플로팅 네비 버튼 */}
+                <button className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={() => {
+                  const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]);
+                  const i = flat.findIndex((x)=>x.id===detail.id);
+                  if (i>0) setDetail(flat[i-1]);
+                }}><ChevronLeft size={18}/></button>
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={() => {
+                  const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]);
+                  const i = flat.findIndex((x)=>x.id===detail.id);
+                  if (i>=0 && i<flat.length-1) setDetail(flat[i+1]);
+                }}><ChevronRight size={18}/></button>
               </div>
-              <div className="text-sm"><b>제목</b> {detail.title || "(제목 없음)"}</div>
-              <div className="text-sm"><b>구매 날짜</b> {detail.purchaseDate || "-"}</div>
-              <div className="text-sm"><b>이벤트</b> {detail.event || "-"}</div>
-              <div className="text-sm"><b>구매처</b> {detail.vendor || "-"}</div>
-              <div className="text-sm"><b>연도</b> {detail.year || "-"}</div>
-              {detail.notes && <div className="text-sm whitespace-pre-wrap"><b>비고</b> {detail.notes}</div>}
-              <label className="mt-2 inline-flex items-center gap-2 text-sm select-none cursor-pointer">
-                <input type="checkbox" checked={!!detail.have} onChange={(e)=>toggleHave(detail, e.target.checked)} /> 보유
+
+              {/* 편집 가능 필드(관리자/편집 모드) */}
+              {(!shareMode) ? (
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <label className="col-span-2">제목<input className="mt-1 w-full border rounded px-2 py-1" value={detail.title||""} onChange={(e)=>setDetail({...detail, title:e.target.value})}/></label>
+                  <label>구매 날짜<input type="date" className="mt-1 w-full border rounded px-2 py-1" value={detail.purchaseDate||""} onChange={(e)=>setDetail({...detail, purchaseDate:e.target.value, year: yearFrom(e.target.value)})}/></label>
+                  <label>이벤트<input className="mt-1 w-full border rounded px-2 py-1" value={detail.event||""} onChange={(e)=>setDetail({...detail, event:e.target.value})}/></label>
+                  <label>구매처<input className="mt-1 w-full border rounded px-2 py-1" value={detail.vendor||""} onChange={(e)=>setDetail({...detail, vendor:e.target.value})}/></label>
+                  <label>연도<input className="mt-1 w-full border rounded px-2 py-1" value={detail.year||""} disabled /></label>
+                  <label className="col-span-2">비고<textarea className="mt-1 w-full border rounded px-2 py-1" rows={3} value={detail.notes||""} onChange={(e)=>setDetail({...detail, notes:e.target.value})}/></label>
+                </div>
+              ) : (
+                <div className="text-sm space-y-1">
+                  <div><b>제목</b> {detail.title || "(제목 없음)"}</div>
+                  <div><b>구매 날짜</b> {detail.purchaseDate || "-"}</div>
+                  <div><b>이벤트</b> {detail.event || "-"}</div>
+                  <div><b>구매처</b> {detail.vendor || "-"}</div>
+                  <div><b>연도</b> {detail.year || "-"}</div>
+                  {detail.notes && <div className="whitespace-pre-wrap"><b>비고</b> {detail.notes}</div>}
+                </div>
+              )}
+
+              <label className="inline-flex items-center gap-2 text-sm select-none cursor-pointer">
+                <input type="checkbox" checked={shareMode ? !!myChecks[detail.id] : !!detail.have} onChange={(e)=>toggleHave(detail, e.target.checked)} /> 보유
               </label>
-            </div>
-            <div className="p-3 flex justify-between border-t">
-              <button className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200" onClick={()=>{
-                // 이전 항목
-                const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]);
-                const i = flat.findIndex((x)=>x.id===detail.id);
-                if (i>0) setDetail(flat[i-1]);
-              }}><ChevronLeft size={18}/> 이전</button>
-              <button className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200" onClick={()=>{
-                // 다음 항목
-                const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]);
-                const i = flat.findIndex((x)=>x.id===detail.id);
-                if (i>=0 && i<flat.length-1) setDetail(flat[i+1]);
-              }}>다음 <ChevronRight size={18}/></button>
+
+              {!shareMode && (
+                <div className="flex gap-2 justify-end">
+                  <button className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200" onClick={()=>setDetail(null)}>닫기</button>
+                  <button className="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" onClick={()=>{
+                    setItems((prev)=>prev.map((p)=>p.id===detail.id? {...p, ...detail}: p));
+                    alert("저장 완료");
+                  }}>저장</button>
+                  <button className="px-3 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700" onClick={()=>removeItem(detail.id)}>삭제</button>
+                </div>
+              )}
             </div>
           </div>
         </div>
