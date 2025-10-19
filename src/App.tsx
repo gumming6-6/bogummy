@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Upload, List, Grid as GridIcon } from "lucide-react";
+import { Plus, Upload, List, Grid as GridIcon, Search } from "lucide-react";
 
 export default function PokaListApp() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -8,24 +8,50 @@ export default function PokaListApp() {
   const isAdmin = params.get("admin") === "1";
   const sourceMode = !!srcParam;
   const shareMode = sourceMode && !isEdit && !isAdmin;
-  useEffect(() => { document.title = "BOGUMMY PHOTOCARD"; }, []);
+  useEffect(() => {
+    document.title = "BOGUMMY PHOTOCARD";
+  }, []);
 
   const [view, setView] = useState("gallery");
+  const [cards, setCards] = useState([]);
+  const [filter, setFilter] = useState({ year: "전체", event: "전체", search: "" });
+
+  useEffect(() => {
+    if (!srcParam) return;
+    fetch(srcParam)
+      .then((res) => res.json())
+      .then((data) => setCards(data || []))
+      .catch(() => setCards([]));
+  }, [srcParam]);
+
+  const filtered = cards.filter((c) => {
+    const matchEvent = filter.event === "전체" || c.event === filter.event;
+    const matchYear = filter.year === "전체" || c.year === filter.year;
+    const matchSearch =
+      !filter.search ||
+      [c.title, c.event, c.memo, c.buyer, c.date].some((f) =>
+        (f || "").toLowerCase().includes(filter.search.toLowerCase())
+      );
+    return matchEvent && matchYear && matchSearch;
+  });
+
+  const grouped = filtered.reduce((acc, cur) => {
+    const y = cur.year || "연도 미지정";
+    acc[y] = acc[y] || [];
+    acc[y].push(cur);
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
         <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
-          {/* 항상 표시되는 큰 제목 */}
           <div className="text-2xl md:text-3xl font-extrabold tracking-wide whitespace-nowrap">
             BOGUMMY PHOTOCARD LIST❣️
           </div>
-
-          {/* 우측: 보기 아이콘 + (공유 모드일 때 안내 문구 또는 관리자 버튼) */}
           <div className="flex items-center gap-2">
             <button onClick={() => setView("gallery")} className={`p-2 rounded-lg ${view === "gallery" ? "bg-slate-200" : "hover:bg-slate-100"}`} title="갤러리 보기"><GridIcon size={18} /></button>
             <button onClick={() => setView("table")} className={`p-2 rounded-lg ${view === "table" ? "bg-slate-200" : "hover:bg-slate-100"}`} title="표 보기"><List size={18} /></button>
-
             {shareMode ? (
               <div className="text-sm text-slate-600 ml-2 truncate">보유 체크 현황은 이 브라우저에만 저장됩니다.</div>
             ) : (
@@ -40,15 +66,56 @@ export default function PokaListApp() {
             )}
           </div>
         </div>
+        {/* 필터 바 복원 */}
+        <div className="mx-auto max-w-6xl px-4 pb-3 flex flex-wrap items-center gap-3 justify-between">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="flex items-center border rounded-lg px-2 bg-white w-full md:w-80">
+              <Search size={18} className="text-slate-400" />
+              <input
+                type="text"
+                placeholder="검색: 제목/이벤트/구매처/연도/메모"
+                value={filter.search}
+                onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+                className="w-full px-2 py-1 outline-none text-sm bg-transparent"
+              />
+            </div>
+            <select value={filter.event} onChange={(e) => setFilter({ ...filter, event: e.target.value })} className="border rounded-lg px-2 py-1 text-sm">
+              <option>전체</option>
+              {[...new Set(cards.map((c) => c.event).filter(Boolean))].map((e) => (
+                <option key={e}>{e}</option>
+              ))}
+            </select>
+            <select value={filter.year} onChange={(e) => setFilter({ ...filter, year: e.target.value })} className="border rounded-lg px-2 py-1 text-sm">
+              <option>전체</option>
+              {[...new Set(cards.map((c) => c.year).filter(Boolean))].map((y) => (
+                <option key={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 py-8 text-center text-slate-400">
-        {isAdmin || isEdit ? (
-          <div>관리자/편집 모드입니다. 여기에서 포카리스트를 관리할 수 있습니다.</div>
-        ) : (
-          <div>공유 보기 모드입니다. 보유 체크는 로컬에만 저장됩니다.</div>
+      <main className="mx-auto max-w-6xl px-4 py-8">
+        {Object.keys(grouped)
+          .sort((a, b) => (b === "연도 미지정" ? -1 : b.localeCompare(a)))
+          .map((year) => (
+            <div key={year} className="mb-8">
+              <h2 className="text-lg font-semibold mb-3 border-b border-slate-300 pb-1">{year}</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {grouped[year].map((card, i) => (
+                  <div key={i} className="bg-white shadow rounded-xl p-2">
+                    <img src={card.image} alt={card.title} className="w-full rounded-lg object-cover" />
+                    <div className="mt-2 text-sm font-medium text-slate-800">{card.title}</div>
+                    <div className="text-xs text-slate-500">{card.event} · {card.year}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        {cards.length === 0 && (
+          <div className="text-center text-slate-400">카드가 없습니다.</div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
