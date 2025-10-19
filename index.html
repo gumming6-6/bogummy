@@ -21,8 +21,40 @@
       })();
     </script>
 
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { theme: { extend: {} } };</script>
+
+    <!-- ✅ 헤더 버튼 정렬 강제 패치 -->
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        // 1) 헤더 한 줄 고정
+        const header = document.querySelector('header');
+        if (!header) return;
+
+        // 헤더 첫 줄 컨테이너 찾기 (max-w-6xl, px-4, py-3 가진 div)
+        const row = header.querySelector('div.max-w-6xl.px-4.py-3');
+        if (!row) return;
+
+        // flex-wrap 제거하고 한 줄 고정 + 가운데 정렬
+        row.classList.remove('flex-wrap');
+        row.classList.add('flex', 'items-center', 'gap-3');
+
+        // 2) 제목 엘리먼트(텍스트에 "BOGUMMY PHOTOCARD" 포함)를 찾아서 flex-1 부여
+        const titleEl = Array.from(row.children).find(
+          (el) => (el.textContent || '').includes('BOGUMMY PHOTOCARD')
+        );
+        if (titleEl) {
+          titleEl.classList.add('flex-1', 'min-w-0');
+        }
+
+        // 3) 오른쪽 버튼 묶음 컨테이너: 줄바꿈 금지 + 넘치면 스크롤
+        const rightEl = row.querySelector('div.flex.items-center');
+        if (rightEl) {
+          rightEl.classList.add('flex-nowrap', 'overflow-x-auto');
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
