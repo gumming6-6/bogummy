@@ -5,57 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BOGUMMY PHOTOCARD</title>
 
-    <!-- 관리자 전용 기본 숨김 -->
+    <!-- 관리자 전용: 기본은 숨김 / ?admin=1 이면 표시 -->
     <style>
       .admin-only { display: none !important; visibility: hidden !important; }
-      .admin-on .admin-only { display: initial !important; visibility: visible !important; }
+      .admin-on .admin-only { display: block !important; visibility: visible !important; }
     </style>
 
-    <!-- 인증 게이트: ?admin=1일 때만 권한 확인 -->
+    <!-- 간단 토글: URL에 ?admin=1 있으면 관리자 UI 표시 -->
     <script>
-      (async () => {
-        const params = new URLSearchParams(location.search);
-        const isAdminMode = params.get('admin') === '1';
-        if (!isAdminMode) return; // 공유용(/bogummy/)은 검사하지 않음
-
-        try {
-          const r = await fetch('https://bogummy-auth.vercel.app/api/auth/me', {
-            credentials: 'include' // 쿠키 포함(필수)
-          });
-          const data = await r.json();
-
-          if (data.ok) {
-            // 인증 성공 → 관리자 UI 노출 허용
-            document.documentElement.classList.add('admin-on');
-
-            // (보너스) 만약 React 코드에서 admin-only를 못 달았다면,
-            // 화면의 "관리자 패널"을 자동으로 찾아 admin-only 클래스를 붙여줍니다.
-            // 텍스트 힌트(캡처 기준)로 상위 래퍼를 찾아 표시/숨김을 제어.
-            const hints = ['관리자:', 'GitHub 바로 커밋', '이미지 업로드', 'catalog.json 커밋', '관리자 패널 닫기'];
-            const all = Array.from(document.querySelectorAll('body *'));
-            for (const t of hints) {
-              const el = all.find(e => (e.textContent || '').includes(t));
-              if (el) {
-                const wrapper = el.closest('section, form, div');
-                if (wrapper) wrapper.classList.add('admin-only');
-                break;
-              }
-            }
-          } else {
-            // 인증 실패 → 로그인으로 보내고, 로그인 후 돌아오게
-            const ret = encodeURIComponent(location.href);
-            location.href = `https://bogummy-auth.vercel.app/api/auth/login?return=${ret}`;
-          }
-        } catch (e) {
-          // 오류 시에도 안전하게 로그인으로
-          const ret = encodeURIComponent(location.href);
-          location.href = `https://bogummy-auth.vercel.app/api/auth/login?return=${ret}`;
+      (function () {
+        const isAdminParam =
+          new URLSearchParams(location.search).get("admin") === "1";
+        if (isAdminParam) {
+          document.documentElement.classList.add("admin-on");
         }
       })();
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: {} } };</script>
+    <script>
+      tailwind.config = { theme: { extend: {} } };
+    </script>
   </head>
   <body>
     <div id="root"></div>

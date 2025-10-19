@@ -35,7 +35,7 @@ export default function PokaListApp() {
   const isEdit = params.get("edit") === "1";
   const isAdmin = params.get("admin") === "1";               // ← 관리자 모드 플래그
   const sourceMode = !!srcParam;                              // 외부 JSON 사용 여부
-  const shareMode = sourceMode && !isEdit && !isAdmin;        // 공유 보기 전용
+  const shareMode = sourceMode && !isEdit && !isAdmin;        // ← 관리자일 땐 공유 모드 아님!
   useEffect(() => { document.title = "BOGUMMY PHOTOCARD"; }, []);
 
   // ------ 상태 ------
@@ -306,8 +306,8 @@ export default function PokaListApp() {
           </div>
         </div>
 
-        {/* 관리자 패널 (관리자 전용 → admin-only) */}
-        {!shareMode && adminOpen && (
+        {/* 관리자 패널 (admin-only가 표시/숨김 제어) */}
+        {adminOpen && (
           <div className="mx-auto max-w-6xl px-4 pb-3">
             <div className="admin-only p-3 rounded-xl border bg-purple-50 border-purple-200 space-y-2">
               <div className="text-sm font-semibold text-purple-800">관리자: GitHub 바로 커밋</div>
@@ -405,7 +405,7 @@ export default function PokaListApp() {
                 <input ref={detailFileRef} type="file" accept="image/*" className="admin-only hidden" onChange={(e)=>onDetailImageSelect(e.target.files)} />
               </div>
 
-              {/* 관리자 전용 편집 폼 vs 공유용 읽기 전용 */}
+              {/* 관리자 전용 편집 폼 */}
               <div className="admin-only grid grid-cols-2 gap-2 text-sm">
                 <label className="col-span-2">제목<input className="mt-1 w-full border rounded px-2 py-1" value={detail.title||""} onChange={(e)=>setDetail({...detail, title:e.target.value})}/></label>
                 <label>구매 날짜<input type="date" className="mt-1 w-full border rounded px-2 py-1" value={detail.purchaseDate||""} onChange={(e)=>setDetail({...detail, purchaseDate:e.target.value, year: yearFrom(e.target.value)})}/></label>
