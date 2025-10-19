@@ -379,8 +379,8 @@ export default function PokaListApp() {
 
       {/* 상세 모달 */}
       {detail && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm grid place-items-center p-4" onClick={()=>setDetail(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl" onClick={(e)=>e.stopPropagation()}>
+        <div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm grid place-items-center p-3" onClick={()=>setDetail(null)}>
+          <div className="bg-white rounded-2xl w-[92vw] max-w-[300px] md:max-w-[360px] shadow-xl" onClick={(e)=>e.stopPropagation()}>
             <div className="flex items-center justify-between p-3 border-b">
               <div className="font-semibold">상세 정보</div>
               <button className="p-1 rounded hover:bg-slate-100" onClick={()=>setDetail(null)}><X size={18} /></button>
