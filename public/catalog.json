@@ -1,557 +1,557 @@
 {
   "v": 1,
-  "title": "포카 카탈로그",
+  "title": "BOGUMMY",
   "note": "",
   "items": [
     {
       "id": "01-cuoc",
       "title": "칸타빌레 팬미팅 DAY 1",
-      "purchaseDate": "2023-08-11",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2023",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/01.jpg"
+      "purchaseDate": "2023-08-11",
+      "year": "2023",
+      "imageUrl": "images/01.jpg",
+      "have": false
     },
     {
       "id": "02-cuol",
       "title": "칸타빌레 팬미팅 DAY 2",
-      "purchaseDate": "2023-08-12",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2023",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/02.jpg"
+      "purchaseDate": "2023-08-12",
+      "year": "2023",
+      "imageUrl": "images/02.jpg",
+      "have": false
     },
     {
       "id": "03-cuov",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 미공포",
       "vendor": "YES24",
-      "year": "2023",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/03.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/03.jpg",
+      "have": false
     },
     {
       "id": "04-cuoy",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 미공포",
       "vendor": "Ktown4u",
-      "year": "2023",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/04.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/04.jpg",
+      "have": false
     },
     {
       "id": "05-cup1",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 미공포",
       "vendor": "YG SELECT",
-      "year": "2023",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/05.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/05.jpg",
+      "have": false
     },
     {
       "id": "06-cupa",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 미공포",
       "vendor": "태국",
-      "year": "2023",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/06.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/06.jpg",
+      "have": false
     },
     {
       "id": "07-cuph",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2023",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/07.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/07.jpg",
+      "have": false
     },
     {
       "id": "08-cupo",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2023",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/08.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/08.jpg",
+      "have": false
     },
     {
       "id": "09-cupu",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2023",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/09.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/09.jpg",
+      "have": false
     },
     {
       "id": "10-cuq0",
       "title": "2024 시즌그리팅",
-      "purchaseDate": "2023-11-20",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2023",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/10.jpg"
+      "purchaseDate": "2023-11-20",
+      "year": "2023",
+      "imageUrl": "images/10.jpg",
+      "have": false
     },
     {
       "id": "11-cuq9",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "YES24",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/11.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/11.jpg",
+      "have": false
     },
     {
       "id": "12-cuqo",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "Ktown4u",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/12.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/12.jpg",
+      "have": false
     },
     {
       "id": "13-cur1",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "WITHMUU",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/13.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/13.jpg",
+      "have": false
     },
     {
       "id": "14-cur9",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "알라딘",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/14.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/14.jpg",
+      "have": false
     },
     {
       "id": "15-curi",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "메이크스타",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/15.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/15.jpg",
+      "have": false
     },
     {
       "id": "16-curt",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "태국",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/16.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/16.jpg",
+      "have": false
     },
     {
       "id": "17-cusi",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 미공포",
       "vendor": "TBL샵",
-      "year": "2024",
       "notes": "구매처별 특전",
-      "have": false,
-      "imageUrl": "images/17.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/17.jpg",
+      "have": false
     },
     {
       "id": "18-cusl",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2024",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/18.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/18.jpg",
+      "have": false
     },
     {
       "id": "19-cuso",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2024",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/19.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/19.jpg",
+      "have": false
     },
     {
       "id": "20-cusr",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2024",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/20.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/20.jpg",
+      "have": false
     },
     {
       "id": "21-cusu",
       "title": "2025 시즌그리팅",
-      "purchaseDate": "2024-12-16",
       "event": "시그 기본포카",
       "vendor": "",
-      "year": "2024",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/21.jpg"
+      "purchaseDate": "2024-12-16",
+      "year": "2024",
+      "imageUrl": "images/21.jpg",
+      "have": false
     },
     {
       "id": "22-cut4",
       "title": "샐러디 포카",
-      "purchaseDate": "2025-05-27",
       "event": "굿즈 특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "단백한 보검 샐러디",
-      "have": false,
-      "imageUrl": "images/22.jpg"
+      "purchaseDate": "2025-05-27",
+      "year": "2025",
+      "imageUrl": "images/22.jpg",
+      "have": false
     },
     {
       "id": "23-cutf",
       "title": "샐러디 포카",
-      "purchaseDate": "2025-05-27",
       "event": "굿즈 특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "단백한 보검 샐러디",
-      "have": false,
-      "imageUrl": "images/23.jpg"
+      "purchaseDate": "2025-05-27",
+      "year": "2025",
+      "imageUrl": "images/23.jpg",
+      "have": false
     },
     {
       "id": "24-cutm",
       "title": "포레봉 ver.2",
-      "purchaseDate": "2025-08-01",
       "event": "굿즈 특전",
       "vendor": "TBL샵",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/24.jpg"
+      "purchaseDate": "2025-08-01",
+      "year": "2025",
+      "imageUrl": "images/24.jpg",
+      "have": false
     },
     {
       "id": "25-cuts",
       "title": "포레봉 모자",
-      "purchaseDate": "2025-08-01",
       "event": "굿즈 특전",
       "vendor": "TBL샵",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/25.jpg"
+      "purchaseDate": "2025-08-01",
+      "year": "2025",
+      "imageUrl": "images/25.jpg",
+      "have": false
     },
     {
       "id": "26-cuty",
       "title": "포레봉 키링",
-      "purchaseDate": "2025-08-01",
       "event": "굿즈 특전",
       "vendor": "TBL샵",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/26.jpg"
+      "purchaseDate": "2025-08-01",
+      "year": "2025",
+      "imageUrl": "images/26.jpg",
+      "have": false
     },
     {
       "id": "mgwii0xj-nxpqur",
       "title": "BE WITH YOU 일본 DAY 1",
-      "purchaseDate": "2025-07-26",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "요코하마 day 1",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0xj-nxpqur.jpg"
+      "purchaseDate": "2025-07-26",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0xj-nxpqur.jpg",
+      "have": false
     },
     {
       "id": "mgwii0xu-lemk70",
       "title": "BE WITH YOU 일본 DAY 2",
-      "purchaseDate": "2025-07-27",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "요코하마 day 2",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0xu-lemk70.jpg"
+      "purchaseDate": "2025-07-27",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0xu-lemk70.jpg",
+      "have": false
     },
     {
       "id": "mgwii0y1-lljrp6",
       "title": "BE WITH YOU 서울 DAY 1",
-      "purchaseDate": "2025-08-01",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "서울 day 1",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0y1-lljrp6.jpg"
+      "purchaseDate": "2025-08-01",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0y1-lljrp6.jpg",
+      "have": false
     },
     {
       "id": "mgwii0y9-sg8hba",
       "title": "BE WITH YOU 서울 DAY 2",
-      "purchaseDate": "2025-08-02",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "서울 day 2",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0y9-sg8hba.jpg"
+      "purchaseDate": "2025-08-02",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0y9-sg8hba.jpg",
+      "have": false
     },
     {
       "id": "mgwii0yi-i71fnk",
       "title": "BE WITH YOU 서울 DAY 1",
-      "purchaseDate": "2025-08-01",
       "event": "팬미 추가특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "서울 day 1 평생친구 GIFT",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0yi-i71fnk.jpg"
+      "purchaseDate": "2025-08-01",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0yi-i71fnk.jpg",
+      "have": false
     },
     {
       "id": "mgwii0yt-uxr8xe",
       "title": "BE WITH YOU 서울 DAY 2",
-      "purchaseDate": "2025-08-02",
       "event": "팬미 추가특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "서울 day 2 평생친구 GIFT",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0yt-uxr8xe.jpg"
+      "purchaseDate": "2025-08-02",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0yt-uxr8xe.jpg",
+      "have": false
     },
     {
       "id": "mgwii0z3-hkn2di",
       "title": "BE WITH YOU 싱가포르",
-      "purchaseDate": "2025-08-14",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0z3-hkn2di.jpg"
+      "purchaseDate": "2025-08-14",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0z3-hkn2di.jpg",
+      "have": false
     },
     {
       "id": "mgwii0zf-fgz4wq",
       "title": "BE WITH YOU 가오슝",
-      "purchaseDate": "2025-08-17",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "대만 가오슝",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0zf-fgz4wq.jpg"
+      "purchaseDate": "2025-08-17",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0zf-fgz4wq.jpg",
+      "have": false
     },
     {
       "id": "mgwii0zn-325lmf",
       "title": "BE WITH YOU 대만 팝업",
-      "purchaseDate": "2025-08-17",
       "event": "해외 팝업",
       "vendor": "현장",
-      "year": "2025",
       "notes": "팝업 구매자 특전",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0zn-325lmf.jpg"
+      "purchaseDate": "2025-08-17",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0zn-325lmf.jpg",
+      "have": false
     },
     {
       "id": "mgwii0zz-lt9pmk",
       "title": "BE WITH YOU 마닐라",
-      "purchaseDate": "2025-08-22",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "필리핀 마닐라",
-      "have": false,
-      "imageUrl": "images/poka_mgwii0zz-lt9pmk.jpg"
+      "purchaseDate": "2025-08-22",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii0zz-lt9pmk.jpg",
+      "have": false
     },
     {
       "id": "mgwii106-ix3jsc",
       "title": "BE WITH YOU 방콕",
-      "purchaseDate": "2025-08-24",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "태국 방콕",
-      "have": false,
-      "imageUrl": "images/poka_mgwii106-ix3jsc.jpg"
+      "purchaseDate": "2025-08-24",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii106-ix3jsc.jpg",
+      "have": false
     },
     {
       "id": "mgwii10e-x4vnno",
       "title": "BE WITH YOU 태국 팝업",
-      "purchaseDate": "2025-08-24",
       "event": "해외 팝업",
       "vendor": "현장",
-      "year": "2025",
       "notes": "팝업 구매자 특전",
-      "have": false,
-      "imageUrl": "images/poka_mgwii10e-x4vnno.jpg"
+      "purchaseDate": "2025-08-24",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii10e-x4vnno.jpg",
+      "have": false
     },
     {
       "id": "mgwii10l-tj2ua3",
       "title": "BE WITH YOU 홍콩",
-      "purchaseDate": "2025-08-29",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/poka_mgwii10l-tj2ua3.jpg"
+      "purchaseDate": "2025-08-29",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii10l-tj2ua3.jpg",
+      "have": false
     },
     {
       "id": "mgwii10s-t068hk",
       "title": "BE WITH YOU 자카르타",
-      "purchaseDate": "2025-08-30",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "인도네시아 자카르타",
-      "have": false,
-      "imageUrl": "images/poka_mgwii10s-t068hk.jpg"
+      "purchaseDate": "2025-08-30",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii10s-t068hk.jpg",
+      "have": false
     },
     {
       "id": "mgwii110-cjbqrr",
       "title": "BE WITH YOU 마카오",
-      "purchaseDate": "2025-09-06",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/poka_mgwii110-cjbqrr.jpg"
+      "purchaseDate": "2025-09-06",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii110-cjbqrr.jpg",
+      "have": false
     },
     {
       "id": "mgwii118-slp60f",
       "title": "BE WITH YOU 쿠알라룸푸르",
-      "purchaseDate": "2025-09-13",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "말레이시아 쿠알라룸푸르",
-      "have": false,
-      "imageUrl": "images/poka_mgwii118-slp60f.jpg"
+      "purchaseDate": "2025-09-13",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii118-slp60f.jpg",
+      "have": false
     },
     {
       "id": "mgwii11g-it4uel",
       "title": "BE WITH YOU 멕시코시티",
-      "purchaseDate": "2025-09-19",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "",
-      "have": false,
-      "imageUrl": "images/poka_mgwii11g-it4uel.jpg"
+      "purchaseDate": "2025-09-19",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii11g-it4uel.jpg",
+      "have": false
     },
     {
       "id": "mgwii11i-w82y9b",
       "title": "BE WITH YOU 몬테레이",
-      "purchaseDate": "2025-09-17",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "멕시코 몬테레이",
-      "have": false,
-      "imageUrl": "images/poka_mgwii11i-w82y9b.jpg"
+      "purchaseDate": "2025-09-17",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii11i-w82y9b.jpg",
+      "have": false
     },
     {
       "id": "mgwii11t-vo5nau",
       "title": "BE WITH YOU 상파울루",
-      "purchaseDate": "2025-09-21",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "브라질 상파울루",
-      "have": false,
-      "imageUrl": "images/poka_mgwii11t-vo5nau.jpg"
+      "purchaseDate": "2025-09-21",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii11t-vo5nau.jpg",
+      "have": false
     },
     {
       "id": "mgwii11u-i9r4k7",
       "title": "BE WITH YOU 산티아고",
-      "purchaseDate": "2025-09-24",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "칠레 산티아고",
-      "have": false,
-      "imageUrl": "images/poka_mgwii11u-i9r4k7.jpg"
+      "purchaseDate": "2025-09-24",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii11u-i9r4k7.jpg",
+      "have": false
     },
     {
       "id": "mgwii122-8kd5m9",
       "title": "BE WITH YOU 서울",
-      "purchaseDate": "2025-10-11",
       "event": "팬미 입장특전",
       "vendor": "현장",
-      "year": "2025",
       "notes": "BE WITH YOU 서울 앙콘",
-      "have": false,
-      "imageUrl": "images/poka_mgwii122-8kd5m9.jpg"
+      "purchaseDate": "2025-10-11",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwii122-8kd5m9.jpg",
+      "have": false
     },
     {
       "id": "mgwii128-gg402a",
       "title": "BE WITH YOU 서울",
-      "purchaseDate": "2025-10-11",
       "event": "팬미 추가특전",
       "vendor": "현장",
+      "notes": "서울 앙콘 평생친구 GIFT.",
+      "purchaseDate": "2025-10-11",
       "year": "2025",
-      "notes": "서울 앙콘 평생친구 GIFT",
-      "have": false,
-      "imageUrl": "images/poka_mgwii128-gg402a.jpg"
+      "imageUrl": "images/poka_mgwii128-gg402a.jpg",
+      "have": false
     },
     {
       "id": "mgwiz2r6-rq5svx",
       "title": "노트북 파우치",
-      "purchaseDate": "2025-09-29",
       "event": "굿즈 특전",
       "vendor": "TBL샵",
-      "year": "2025",
       "notes": "노트북 파우치 15\" (네이비)",
-      "have": false,
-      "imageUrl": "images/poka_mgwiz2r6-rq5svx.jpg"
+      "purchaseDate": "2025-09-29",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwiz2r6-rq5svx.jpg",
+      "have": false
     },
     {
       "id": "mgwizi7n-jnrtta",
       "title": "노트북 파우치",
-      "purchaseDate": "2025-09-29",
       "event": "굿즈 특전",
       "vendor": "TBL샵",
-      "year": "2025",
       "notes": "노트북 파우치 13\" (베이지)",
-      "have": false,
-      "imageUrl": "images/poka_mgwizi7n-jnrtta.jpg"
+      "purchaseDate": "2025-09-29",
+      "year": "2025",
+      "imageUrl": "images/poka_mgwizi7n-jnrtta.jpg",
+      "have": false
     }
   ]
 }
