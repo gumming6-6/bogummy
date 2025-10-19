@@ -404,6 +404,7 @@ export default function PokaListApp() {
                   const i = flat.findIndex((x)=>x.id===detail.id);
                   if (i>=0 && i<flat.length-1) setDetail(flat[i+1]);
                 }}><ChevronRight size={18}/></button>
+                <input ref={detailFileRef} type="file" accept="image/*" className="hidden" onChange={(e)=>onDetailImageSelect(e.target.files)} />
               </div>
 
               {/* 편집 가능 필드(관리자/편집 모드) */}
