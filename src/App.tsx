@@ -386,13 +386,18 @@ export default function PokaListApp() {
               <button className="p-1 rounded hover:bg-slate-100" onClick={()=>setDetail(null)}><X size={18} /></button>
             </div>
             <div className="p-3 space-y-3">
-              <div className="relative rounded-xl border overflow-hidden aspect-[2/3] bg-slate-50 grid place-items-center cursor-pointer" onClick={()=>detailFileRef.current?.click()}>
+              <div
+                className={`relative rounded-xl border overflow-hidden aspect-[2/3] bg-slate-50 grid place-items-center ${shareMode ? 'cursor-default' : 'cursor-pointer'}`}
+                onClick={shareMode ? undefined : ()=>detailFileRef.current?.click()}
+              >
                 {detail.imageUrl ? (
                   <img src={detail.imageUrl} alt={detail.title} className="w-full h-full object-cover" />
                 ) : (<div className="text-slate-400 text-sm">이미지 선택</div>)}
                 <button className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={(e) => { e.stopPropagation(); const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]); const i = flat.findIndex((x)=>x.id===detail.id); if (i>0) setDetail(flat[i-1]); }}><ChevronLeft size={18}/></button>
                 <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={(e) => { e.stopPropagation(); const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]); const i = flat.findIndex((x)=>x.id===detail.id); if (i>=0 && i<flat.length-1) setDetail(flat[i+1]); }}><ChevronRight size={18}/></button>
-                <input ref={detailFileRef} type="file" accept="image/*" className="hidden" onChange={(e)=>onDetailImageSelect(e.target.files)} />
+                {!shareMode && (
+                  <input ref={detailFileRef} type="file" accept="image/*" className="hidden" onChange={(e)=>onDetailImageSelect(e.target.files)} />
+                )}
               </div>
 
               {(!shareMode) ? (
