@@ -33,9 +33,9 @@ export default function PokaListApp() {
   const srcRaw = params.get("src") || "";
   let srcParam = srcRaw; try { srcParam = decodeURIComponent(srcRaw); } catch {}
   const isEdit = params.get("edit") === "1";
-  const isAdmin = params.get("admin") === "1";
-  const sourceMode = !!srcParam; // 외부 JSON 사용 여부
-  const shareMode = sourceMode && !isEdit && !isAdmin; // 공유 보기 전용
+  const isAdmin = params.get("admin") === "1";               // ← 관리자 모드 플래그
+  const sourceMode = !!srcParam;                              // 외부 JSON 사용 여부
+  const shareMode = sourceMode && !isEdit && !isAdmin;        // 공유 보기 전용
   useEffect(() => { document.title = "BOGUMMY PHOTOCARD"; }, []);
 
   // ------ 상태 ------
@@ -271,19 +271,22 @@ export default function PokaListApp() {
           <div className="flex items-center gap-2 ml-auto">
             <button onClick={() => setView("gallery")} className={`p-2 rounded-lg ${view === "gallery" ? "bg-slate-200" : "hover:bg-slate-100"}`} title="갤러리 보기"><GridIcon size={18} /></button>
             <button onClick={() => setView("table")} className={`p-2 rounded-lg ${view === "table" ? "bg-slate-200" : "hover:bg-slate-100"}`} title="표 보기"><List size={18} /></button>
-            {shareMode ? (
+
+            {/* 공유 모드 안내 텍스트 */}
+            {shareMode && (
               <div className="text-sm text-slate-600 ml-2 truncate">보유 체크 현황은 이 브라우저에만 저장됩니다.</div>
-            ) : (
-              <>
-                <button onClick={addNewItem} className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700"><Plus size={14} /> 새 항목</button>
-                <label className="flex items-center gap-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm hover:bg-slate-800 cursor-pointer">
-                  <Upload size={14} /> 다중 이미지 추가
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e)=>handleMultiAdd(e.target.files)} />
-                </label>
-                <button onClick={() => createSrcShareLink()} className="flex items-center gap-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-amber-600"><LinkIcon size={14}/> JSON 주소로 공유(src)</button>
-                <button onClick={() => setAdminOpen(v=>!v)} className="flex items-center gap-1 bg-purple-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-purple-700">관리자 패널 {adminOpen?"닫기":"열기"}</button>
-              </>
             )}
+
+            {/* 관리자 전용: 새 항목/이미지 업로드/공유(src)/패널 열기 → admin-only로 숨김 */}
+            <div className="admin-only flex items-center gap-2">
+              <button onClick={addNewItem} className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700"><Plus size={14} /> 새 항목</button>
+              <label className="flex items-center gap-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm hover:bg-slate-800 cursor-pointer">
+                <Upload size={14} /> 다중 이미지 추가
+                <input type="file" accept="image/*" multiple className="hidden" onChange={(e)=>handleMultiAdd(e.target.files)} />
+              </label>
+              <button onClick={() => createSrcShareLink()} className="flex items-center gap-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-amber-600"><LinkIcon size={14}/> JSON 주소로 공유(src)</button>
+              <button onClick={() => setAdminOpen(v=>!v)} className="flex items-center gap-1 bg-purple-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-purple-700">관리자 패널 {adminOpen?"닫기":"열기"}</button>
+            </div>
           </div>
         </div>
 
@@ -303,10 +306,10 @@ export default function PokaListApp() {
           </div>
         </div>
 
-        {/* 관리자 패널 */}
+        {/* 관리자 패널 (관리자 전용 → admin-only) */}
         {!shareMode && adminOpen && (
           <div className="mx-auto max-w-6xl px-4 pb-3">
-            <div className="p-3 rounded-xl border bg-purple-50 border-purple-200 space-y-2">
+            <div className="admin-only p-3 rounded-xl border bg-purple-50 border-purple-200 space-y-2">
               <div className="text-sm font-semibold text-purple-800">관리자: GitHub 바로 커밋</div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <input className="px-3 py-2 rounded-lg border" placeholder="owner (예: gumming6-6)" value={gh.owner} onChange={(e)=>setGh({...gh, owner:e.target.value})} />
@@ -349,19 +352,21 @@ export default function PokaListApp() {
                           <div className="w-full h-full grid place-items-center text-slate-300"><ImageIcon/></div>
                         )}
                       </div>
-                      {!shareMode && (
-                        <div className="absolute top-2 right-2 flex gap-1">
-                          <button className="p-1.5 rounded bg-white/90 hover:bg-white shadow" title="수정" onClick={(e)=>{e.stopPropagation(); setDetail(card);}}>
-                            <Pencil size={14}/>
-                          </button>
-                          <button className="p-1.5 rounded bg-white/90 hover:bg-white shadow" title="삭제" onClick={(e)=>{e.stopPropagation(); removeItem(card.id);}}>
-                            <Trash2 size={14}/>
-                          </button>
-                        </div>
-                      )}
+
+                      {/* 관리자 전용: 카드 수정/삭제 아이콘 → admin-only */}
+                      <div className="admin-only absolute top-2 right-2 flex gap-1">
+                        <button className="p-1.5 rounded bg-white/90 hover:bg-white shadow" title="수정" onClick={(e)=>{e.stopPropagation(); setDetail(card);}}>
+                          <Pencil size={14}/>
+                        </button>
+                        <button className="p-1.5 rounded bg-white/90 hover:bg-white shadow" title="삭제" onClick={(e)=>{e.stopPropagation(); removeItem(card.id);}}>
+                          <Trash2 size={14}/>
+                        </button>
+                      </div>
                     </div>
+
                     <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
                     <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
+
                     <label className="mt-1 inline-flex items-center gap-2 text-xs select-none">
                       <input type="checkbox" checked={have} onChange={(e)=>toggleHave(card, e.target.checked)} onClick={(e)=>e.stopPropagation()} /> 보유
                     </label>
@@ -395,45 +400,40 @@ export default function PokaListApp() {
                 ) : (<div className="text-slate-400 text-sm">이미지 선택</div>)}
                 <button className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={(e) => { e.stopPropagation(); const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]); const i = flat.findIndex((x)=>x.id===detail.id); if (i>0) setDetail(flat[i-1]); }}><ChevronLeft size={18}/></button>
                 <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={(e) => { e.stopPropagation(); const flat = orderedYearKeys.flatMap((y)=>grouped[y]||[]); const i = flat.findIndex((x)=>x.id===detail.id); if (i>=0 && i<flat.length-1) setDetail(flat[i+1]); }}><ChevronRight size={18}/></button>
-                {!shareMode && (
-                  <input ref={detailFileRef} type="file" accept="image/*" className="hidden" onChange={(e)=>onDetailImageSelect(e.target.files)} />
-                )}
+
+                {/* 관리자 전용: 이미지 파일 선택 input → admin-only */}
+                <input ref={detailFileRef} type="file" accept="image/*" className="admin-only hidden" onChange={(e)=>onDetailImageSelect(e.target.files)} />
               </div>
 
-              {(!shareMode) ? (
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <label className="col-span-2">제목<input className="mt-1 w-full border rounded px-2 py-1" value={detail.title||""} onChange={(e)=>setDetail({...detail, title:e.target.value})}/></label>
-                  <label>구매 날짜<input type="date" className="mt-1 w-full border rounded px-2 py-1" value={detail.purchaseDate||""} onChange={(e)=>setDetail({...detail, purchaseDate:e.target.value, year: yearFrom(e.target.value)})}/></label>
-                  <label>이벤트<input className="mt-1 w-full border rounded px-2 py-1" value={detail.event||""} onChange={(e)=>setDetail({...detail, event:e.target.value})}/></label>
-                  <label>구매처<input className="mt-1 w-full border rounded px-2 py-1" value={detail.vendor||""} onChange={(e)=>setDetail({...detail, vendor:e.target.value})}/></label>
-                  <label>연도<input className="mt-1 w-full border rounded px-2 py-1" value={detail.year||""} disabled /></label>
-                  <label className="col-span-2">비고<textarea className="mt-1 w-full border rounded px-2 py-1" rows={3} value={detail.notes||""} onChange={(e)=>setDetail({...detail, notes:e.target.value})}/></label>
-                </div>
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div><b>제목</b> {detail.title || "(제목 없음)"}</div>
-                  <div><b>구매 날짜</b> {detail.purchaseDate || "-"}</div>
-                  <div><b>이벤트</b> {detail.event || "-"}</div>
-                  <div><b>구매처</b> {detail.vendor || "-"}</div>
-                  <div><b>연도</b> {detail.year || "-"}</div>
-                  {detail.notes && <div className="whitespace-pre-wrap"><b>비고</b> {detail.notes}</div>}
-                </div>
-              )}
+              {/* 관리자 전용 편집 폼 vs 공유용 읽기 전용 */}
+              <div className="admin-only grid grid-cols-2 gap-2 text-sm">
+                <label className="col-span-2">제목<input className="mt-1 w-full border rounded px-2 py-1" value={detail.title||""} onChange={(e)=>setDetail({...detail, title:e.target.value})}/></label>
+                <label>구매 날짜<input type="date" className="mt-1 w-full border rounded px-2 py-1" value={detail.purchaseDate||""} onChange={(e)=>setDetail({...detail, purchaseDate:e.target.value, year: yearFrom(e.target.value)})}/></label>
+                <label>이벤트<input className="mt-1 w-full border rounded px-2 py-1" value={detail.event||""} onChange={(e)=>setDetail({...detail, event:e.target.value})}/></label>
+                <label>구매처<input className="mt-1 w-full border rounded px-2 py-1" value={detail.vendor||""} onChange={(e)=>setDetail({...detail, vendor:e.target.value})}/></label>
+                <label>연도<input className="mt-1 w-full border rounded px-2 py-1" value={detail.year||""} disabled /></label>
+                <label className="col-span-2">비고<textarea className="mt-1 w-full border rounded px-2 py-1" rows={3} value={detail.notes||""} onChange={(e)=>setDetail({...detail, notes:e.target.value})}/></label>
+              </div>
 
-              <label className="inline-flex items-center gap-2 text-sm select-none cursor-pointer">
-                <input type="checkbox" checked={shareMode ? !!myChecks[detail.id] : !!detail.have} onChange={(e)=>toggleHave(detail, e.target.checked)} /> 보유
-              </label>
+              {/* 공유용 읽기 전용 블록 */}
+              <div className="text-sm space-y-1">
+                <div><b>제목</b> {detail.title || "(제목 없음)"}</div>
+                <div><b>구매 날짜</b> {detail.purchaseDate || "-"}</div>
+                <div><b>이벤트</b> {detail.event || "-"}</div>
+                <div><b>구매처</b> {detail.vendor || "-"}</div>
+                <div><b>연도</b> {detail.year || "-"}</div>
+                {detail.notes && <div className="whitespace-pre-wrap"><b>비고</b> {detail.notes}</div>}
+              </div>
 
-              {!shareMode && (
-                <div className="flex gap-2 justify-end">
-                  <button className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200" onClick={()=>setDetail(null)}>닫기</button>
-                  <button className="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" onClick={()=>{
-                    setItems((prev)=>prev.map((p)=>p.id===detail.id? {...p, ...detail}: p));
-                    alert("저장 완료");
-                  }}>저장</button>
-                  <button className="px-3 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700" onClick={()=>removeItem(detail.id)}>삭제</button>
-                </div>
-              )}
+              {/* 관리자 전용: 저장/삭제 버튼 → admin-only */}
+              <div className="admin-only flex gap-2 justify-end">
+                <button className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200" onClick={()=>setDetail(null)}>닫기</button>
+                <button className="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" onClick={()=>{
+                  setItems((prev)=>prev.map((p)=>p.id===detail.id? {...p, ...detail}: p));
+                  alert("저장 완료");
+                }}>저장</button>
+                <button className="px-3 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700" onClick={()=>removeItem(detail.id)}>삭제</button>
+              </div>
             </div>
           </div>
         </div>
