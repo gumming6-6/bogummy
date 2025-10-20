@@ -18,6 +18,32 @@ const byDateAsc = (a: any, b: any) => {
   return (a.__idx ?? 0) - (b.__idx ?? 0);
 };
 
+// 선택지(드롭다운)
+const EVENT_CHOICES = [
+  "",
+  "시그 미공포",
+  "시그 기본포카",
+  "해외 팝업",
+  "시그 미공포(해외)",
+  "팬미 입장특전",
+  "팬미 추가특전",
+  "굿즈 특전",
+];
+const VENDOR_CHOICES = [
+  "",
+  "TBL샵",
+  "YG SELECT",
+  "Ktown4u",
+  "WITHMUU",
+  "알라딘",
+  "메이크스타",
+  "대만",
+  "태국",
+  "일본",
+  "현장",
+  "YES24",
+];
+
 export default function PokaListApp() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const isAdmin = params.get("admin") === "1";
@@ -254,7 +280,7 @@ function DetailModal({ mode, shareMode, card, list, onClose, onPrev, onNext, onT
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm grid place-items-center p-3 z-[200]" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-[90vw] max-w-[360px] shadow-xl p-3 relative" onClick={(e)=>e.stopPropagation()}>
+      <div className={`bg-white rounded-2xl w-[90vw] ${isViewOnly ? 'max-w-[300px]' : 'max-w-[360px]'} shadow-xl p-3 relative`} onClick={(e)=>e.stopPropagation()}>
         <button className="absolute right-2 top-2 p-1 rounded hover:bg-slate-100" onClick={onClose}><X size={18}/></button>
         <div className="relative rounded-xl border overflow-hidden aspect-[2/3] bg-white grid place-items-center mb-2" onClick={openFile}>
           {(draft.imageUrl || card.imageUrl) ? (<img src={draft.imageUrl || card.imageUrl} className="w-full h-full object-cover"/>) : (<div className="text-slate-300"><ImageIcon/></div>)}
@@ -271,13 +297,22 @@ function DetailModal({ mode, shareMode, card, list, onClose, onPrev, onNext, onT
             <div><b>연도</b> {card.year || "-"}</div>
             <div><b>비고</b> {card.notes || "-"}</div>
             <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={!!card.have} onChange={(e)=>onToggleHave(card.id, e.currentTarget.checked)} /> 보유</label>
+            <div className="flex justify-end pt-2"><button className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200" onClick={onClose}>닫기</button></div>
           </div>
         ) : (
           <div className="space-y-2 text-sm">
             <label className="block">제목<input value={draft.title||""} onChange={(e)=>setDraft({...draft,title:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
             <label className="block">구매 날짜<input type="date" value={draft.purchaseDate||""} onChange={(e)=>setDraft({...draft,purchaseDate:e.target.value, year: (e.target.value? new Date(e.target.value).getFullYear().toString(): draft.year)})} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">이벤트<input value={draft.event||""} onChange={(e)=>setDraft({...draft,event:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">구매처<input value={draft.vendor||""} onChange={(e)=>setDraft({...draft,vendor:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">이벤트
+              <select value={draft.event||""} onChange={(e)=>setDraft({...draft,event:e.target.value})} className="w-full border rounded px-2 py-1 mt-1">
+                {EVENT_CHOICES.map(v => (<option key={v} value={v}>{v || "(선택)"}</option>))}
+              </select>
+            </label>
+            <label className="block">구매처
+              <select value={draft.vendor||""} onChange={(e)=>setDraft({...draft,vendor:e.target.value})} className="w-full border rounded px-2 py-1 mt-1">
+                {VENDOR_CHOICES.map(v => (<option key={v} value={v}>{v || "(선택)"}</option>))}
+              </select>
+            </label>
             <label className="block">연도<input value={draft.year||""} onChange={(e)=>setDraft({...draft,year:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
             <label className="block">비고<textarea value={draft.notes||""} onChange={(e)=>setDraft({...draft,notes:e.target.value})} rows={3} className="w-full border rounded px-2 py-1 mt-1"/></label>
             <label className="mt-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={!!draft.have} onChange={(e)=>setDraft({...draft,have:e.currentTarget.checked})} /> 보유</label>
