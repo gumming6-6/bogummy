@@ -35,11 +35,17 @@ export default function PokaListApp() {
   const [loadError, setLoadError] = useState("");
   const [filter, setFilter] = useState({ search: "", event: "전체", year: "전체" });
   const [detail, setDetail] = useState<any|null>(null);
+  const [myChecks, setMyChecks] = useState<Record<string, boolean>>({});
   const [adminOpen, setAdminOpen] = useState(isAdmin);
   const [gh, setGh] = useState({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" });
 
 
   useEffect(()=>{ document.title = "BOGUMMY PHOTOCARD" }, []);
+
+  // 내 보유 체크(공유 모드 전용) 로컬 저장
+  const shareKey = React.useMemo(() => `pokaShareChecks-${srcParam || 'local'}`,[srcParam]);
+  useEffect(()=>{ try { const raw = localStorage.getItem(shareKey); if (raw) setMyChecks(JSON.parse(raw)); } catch {} },[shareKey]);
+  useEffect(()=>{ try { localStorage.setItem(shareKey, JSON.stringify(myChecks)); } catch {} },[myChecks, shareKey]);
 
   // 데이터 로드: srcParam 사용 시 외부 catalog.json에서 불러오기
   useEffect(() => {
@@ -164,7 +170,7 @@ export default function PokaListApp() {
             <h2 className="text-lg font-semibold mb-3 border-b border-slate-300 pb-1">{y}</h2>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(160px, 1fr))` }}>
               {grouped[y]?.map((card: any, i: number) => (
-                <article key={card.id || i} className="bg-white shadow rounded-xl p-2 border border-slate-200 cursor-pointer" onClick={()=>setDetail(card)}>
+                <article key={card.id || i} className="relative bg-white shadow rounded-xl p-2 border border-slate-200 cursor-pointer" onClick={()=>setDetail(card)}>
                   <div className="w-full rounded-xl border border-slate-200 overflow-hidden aspect-[2/3] bg-white">
                     {card.imageUrl ? (
                       <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
@@ -174,6 +180,21 @@ export default function PokaListApp() {
                   </div>
                   <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
                   <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
+                  <label className="mt-1 flex items-center gap-1 text-xs text-slate-600 select-none">
+                    <input type="checkbox" checked={shareMode ? !!myChecks[card.id] : !!card.have}
+                      onChange={(e)=>{
+                        const checked = e.currentTarget.checked;
+                        if (shareMode) setMyChecks(prev=>({ ...prev, [card.id]: checked }));
+                        else setItems(prev=>prev.map(c=>c.id===card.id?{...c, have: checked}:c));
+                      }}
+                    /> 보유
+                  </label>
+                  {!shareMode && (
+                    <div className="absolute right-2 top-2 flex gap-1">
+                      <button title="수정" className="p-1 rounded bg-white/80 hover:bg-white shadow" onClick={(e)=>{e.stopPropagation(); setDetail(card);}}><Pencil size={14}/></button>
+                      <button title="삭제" className="p-1 rounded bg-white/80 hover:bg-white shadow" onClick={(e)=>{e.stopPropagation(); setItems(prev=>prev.filter(c=>c.id!==card.id));}}><Trash2 size={14}/></button>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
@@ -187,28 +208,59 @@ export default function PokaListApp() {
 
       {/* 상세 모달 */}
       {detail && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm grid place-items-center p-3 z-[200]">
-          <div className="bg-white rounded-2xl w-[90vw] max-w-[360px] shadow-xl p-3">
-            <div className="flex items-center justify-between mb-2 border-b pb-2">
-              <b>상세 정보</b>
-              <button onClick={()=>setDetail(null)}><X size={18}/></button>
-            </div>
-            <div className="space-y-2 text-sm">
-              <label className="block">제목<input className="w-full border rounded px-2 py-1 mt-1"/></label>
-              <label className="block">구매 날짜<input type="date" className="w-full border rounded px-2 py-1 mt-1"/></label>
-              <label className="block">이벤트<select className="w-full border rounded px-2 py-1 mt-1">{formEventOptions.map(v=>(<option key={v}>{v}</option>))}</select></label>
-              <label className="block">구매처<input className="w-full border rounded px-2 py-1 mt-1"/></label>
-              <label className="block">연도<select className="w-full border rounded px-2 py-1 mt-1">{formYearOptions.map(v=>(<option key={v}>{v}</option>))}</select></label>
-              <label className="block">비고<textarea rows={3} className="w-full border rounded px-2 py-1 mt-1"/></label>
-              <div className="flex justify-end gap-2 pt-2 border-t mt-2">
-                <button className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200">닫기</button>
-                <button className="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">저장</button>
-                <button className="px-3 py-1.5 rounded bg-rose-600 text-white hover:bg-rose-700">삭제</button>
-              </div>
+        <DetailModal
+          shareMode={shareMode}
+          card={detail}
+          list={filtered.sort(byDateAsc)}
+          onClose={()=>setDetail(null)}
+          onPrev={(id)=>{ const arr = filtered.sort(byDateAsc); const i = arr.findIndex(c=>c.id===id); if(i>0) setDetail(arr[i-1]); }}
+          onNext={(id)=>{ const arr = filtered.sort(byDateAsc); const i = arr.findIndex(c=>c.id===id); if(i>=0 && i<arr.length-1) setDetail(arr[i+1]); }}
+          onToggleHave={(id,checked)=>{ if(shareMode) setMyChecks(p=>({...p,[id]:checked})); else setItems(p=>p.map(c=>c.id===id?{...c,have:checked}:c)); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DetailModal({ shareMode, card, list, onClose, onPrev, onNext, onToggleHave }: any){
+  const idx = React.useMemo(()=> list.findIndex((c:any)=>c.id===card.id), [list, card]);
+  const canPrev = idx>0; const canNext = idx>=0 && idx<list.length-1;
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm grid place-items-center p-3 z-[200]" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-[90vw] max-w-[360px] shadow-xl p-3 relative" onClick={(e)=>e.stopPropagation()}>
+        <button className="absolute right-2 top-2 p-1 rounded hover:bg-slate-100" onClick={onClose}><X size={18}/></button>
+        <div className="relative rounded-xl border overflow-hidden aspect-[2/3] bg-white grid place-items-center mb-2">
+          {card.imageUrl ? (<img src={card.imageUrl} className="w-full h-full object-cover"/>) : (<div className="text-slate-300"><ImageIcon/></div>)}
+          {canPrev && (<button className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={()=>onPrev(card.id)}><ChevronLeft/></button>)}
+          {canNext && (<button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={()=>onNext(card.id)}><ChevronRight/></button>)}
+        </div>
+        {shareMode ? (
+          <div className="space-y-1 text-sm">
+            <div><b>제목</b> {card.title || "(제목 없음)"}</div>
+            <div><b>구매 날짜</b> {card.purchaseDate || "-"}</div>
+            <div><b>이벤트</b> {card.event || "-"}</div>
+            <div><b>구매처</b> {card.vendor || "-"}</div>
+            <div><b>연도</b> {card.year || "-"}</div>
+            <div><b>비고</b> {card.notes || "-"}</div>
+            <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={!!card.have} onChange={(e)=>onToggleHave(card.id, e.currentTarget.checked)} /> 보유</label>
+          </div>
+        ) : (
+          <div className="space-y-2 text-sm">
+            <label className="block">제목<input defaultValue={card.title} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">구매 날짜<input type="date" defaultValue={card.purchaseDate} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">이벤트<input defaultValue={card.event} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">구매처<input defaultValue={card.vendor} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">연도<input defaultValue={card.year} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">비고<textarea defaultValue={card.notes} rows={3} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="mt-1 flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={!!card.have} onChange={(e)=>onToggleHave(card.id, e.currentTarget.checked)} /> 보유</label>
+            <div className="flex justify-end gap-2 pt-2 border-t mt-2">
+              <button className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200" onClick={onClose}>닫기</button>
+              <button className="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">저장</button>
+              <button className="px-3 py-1.5 rounded bg-rose-600 text-white hover:bg-rose-700">삭제</button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
