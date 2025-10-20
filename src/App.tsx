@@ -154,6 +154,27 @@ export default function PokaListApp() {
             </div>
           )}
         </div>
+
+        {/* 관리자 패널 (이전과 동일 UI 복구) */}
+        {!shareMode && adminOpen && (
+          <div className="mx-auto max-w-6xl px-4 pb-3">
+            <div className="p-3 rounded-xl border bg-purple-50 border-purple-200 space-y-2">
+              <div className="text-sm font-semibold text-purple-800">관리자: GitHub 바로 커밋</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <input className="px-3 py-2 rounded-lg border" placeholder="owner" value={gh.owner} onChange={(e)=>setGh({...gh, owner:e.target.value})}/>
+                <input className="px-3 py-2 rounded-lg border" placeholder="repo" value={gh.repo} onChange={(e)=>setGh({...gh, repo:e.target.value})}/>
+                <input className="px-3 py-2 rounded-lg border" placeholder="branch" value={gh.branch} onChange={(e)=>setGh({...gh, branch:e.target.value})}/>
+                <input className="px-3 py-2 rounded-lg border" placeholder="token" value={gh.token} onChange={(e)=>setGh({...gh, token:e.target.value})}/>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <label className="bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-xl inline-flex items-center gap-2 cursor-pointer"><Upload size={16}/> 이미지 업로드<input type="file" multiple className="hidden"/></label>
+                <button className="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">catalog.json 커밋</button>
+                <button className="px-3 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 inline-flex items-center gap-2"><LinkIcon size={16}/> JSON 주소로 공유(src)</button>
+                <div className="text-xs text-slate-600">커밋 후 1~2분 후 반영됩니다.</div>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
