@@ -146,7 +146,95 @@ export default function PokaListApp() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
-        {/* 목록 생략 */}
+        {/* 필터 */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex items-center border rounded-lg px-2 bg-white w-full md:w-80">
+            <Search size={18} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="검색: 제목/이벤트/구매처/연도/메모"
+              value={filter.search}
+              onChange={(e)=>setFilter({...filter, search:e.target.value})}
+              className="w-full px-2 py-1 outline-none text-sm bg-transparent"
+            />
+          </div>
+          <select
+            value={filter.event}
+            onChange={(e)=>setFilter({...filter, event:e.target.value})}
+            className="border rounded-lg px-2 py-1 text-sm"
+          >
+            {eventOptions.map((v)=>(<option key={v}>{v}</option>))}
+          </select>
+          <select
+            value={filter.year}
+            onChange={(e)=>setFilter({...filter, year:e.target.value})}
+            className="border rounded-lg px-2 py-1 text-sm"
+          >
+            {yearOptions.map((v)=>(<option key={v}>{v}</option>))}
+          </select>
+        </div>
+
+        {loadError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">{loadError}</div>
+        )}
+
+        {/* 연도별 그룹 */}
+        {orderedYears.map((y) => (
+          <section key={y} className="mb-8">
+            <h2 className="text-lg font-semibold mb-3 border-b border-slate-300 pb-1">{y}</h2>
+            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(160px, 1fr))` }}>
+              {grouped[y]?.map((card: any, i: number) => (
+                <article
+                  key={card.id || i}
+                  className="relative bg-white shadow rounded-xl p-2 border border-slate-200 cursor-pointer"
+                  onClick={()=>{ setDetail(card); setDetailMode("view"); }}
+                >
+                  <div className="w-full rounded-xl border border-slate-200 overflow-hidden aspect-[2/3] bg-white">
+                    {card.imageUrl ? (
+                      <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full grid place-items-center text-slate-300"><ImageIcon/></div>
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
+                  <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
+                  <label
+                    className="mt-1 flex items-center gap-1 text-xs text-slate-600 select-none"
+                    onClick={(e)=>e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={shareMode ? !!myChecks[card.id] : !!card.have}
+                      onChange={(e)=>{
+                        const checked = e.currentTarget.checked;
+                        if (shareMode) setMyChecks(prev=>({ ...prev, [card.id]: checked }));
+                        else setItems(prev=>prev.map(c=>c.id===card.id?{...c, have: checked}:c));
+                      }}
+                    /> 보유
+                  </label>
+                  {!shareMode && (
+                    <div className="absolute right-2 top-2 flex gap-1">
+                      <button
+                        title="수정"
+                        className="p-1 rounded bg-white/80 hover:bg-white shadow"
+                        onClick={(e)=>{e.stopPropagation(); setDetail(card); setDetailMode("edit");}}
+                      ><Pencil size={14}/></button>
+                      <button
+                        title="삭제"
+                        className="p-1 rounded bg-white/80 hover:bg-white shadow"
+                        onClick={(e)=>{e.stopPropagation(); if(window.confirm("삭제하시겠습니까?")) setItems(prev=>prev.filter(c=>c.id!==card.id));}}
+                      ><Trash2 size={14}/></button>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        {items.length === 0 && !loadError && (
+          <div className="text-center text-slate-400">카드가 없습니다.</div>
+        )}
       </main>
     </div>
   );
