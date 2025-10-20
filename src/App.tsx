@@ -15,19 +15,9 @@ const byDateAsc = (a: any, b: any) => {
   if (!db) return -1;
   const diff = da.localeCompare(db);
   if (diff !== 0) return diff;
-
-  // 현재 화면에 렌더된 카드들을 (연도 그룹 순서 + 날짜 오름차순) 1차원으로 펼친 목록
-  const viewList = React.useMemo(() => {
-    const out: any[] = [];
-    orderedYears.forEach((y) => {
-      const arr = grouped[y] || [];
-      arr.forEach((c) => out.push(c));
-    });
-    return out;
-  }, [orderedYears, grouped]);
-
   return (a.__idx ?? 0) - (b.__idx ?? 0);
 };
+
 
 // 선택지(드롭다운)
 const EVENT_CHOICES = [
@@ -135,6 +125,16 @@ export default function PokaListApp() {
 
   const eventOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.event).filter(Boolean)))], [items]);
   const yearOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.year).filter(Boolean))).sort((a:any,b:any)=>Number(a)-Number(b))], [items]);
+
+  // 화면에 렌더된 카드 순서를 1차원으로 펼친 목록(연도 그룹 순서 + 날짜 오름차순)
+  const viewList = React.useMemo(() => {
+    const out: any[] = [];
+    orderedYears.forEach((y) => {
+      const arr = grouped[y] || [];
+      arr.forEach((c) => out.push(c));
+    });
+    return out;
+  }, [orderedYears, grouped]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
