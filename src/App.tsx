@@ -84,7 +84,7 @@ export default function PokaListApp() {
       // 1) 현재 sha 조회 (있으면 업데이트, 없으면 생성)
       let sha: string | undefined;
       const metaRes = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(gh.branch)}`, {
-        headers: { Authorization: `token ${gh.token}`, Accept: "application/vnd.github+json" },
+        headers: { Authorization: `Bearer ${gh.token}`, Accept: "application/vnd.github+json" },
       });
       if (metaRes.ok) {
         const meta = await metaRes.json();
@@ -109,7 +109,7 @@ export default function PokaListApp() {
       // 3) PUT contents API
       const putRes = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${encodeURIComponent(path)}`, {
         method: "PUT",
-        headers: { Authorization: `token ${gh.token}`, "Content-Type": "application/json", Accept: "application/vnd.github+json" },
+        headers: { Authorization: `Bearer ${gh.token}`, "Content-Type": "application/json", Accept: "application/vnd.github+json" },
         body: JSON.stringify({
           message: "chore: update catalog.json via admin panel",
           content: contentB64,
@@ -121,12 +121,12 @@ export default function PokaListApp() {
       if (!putRes.ok) {
         const errText = await putRes.text();
         console.error(errText);
-        alert("커밋 실패: " + putRes.status + "
-" + errText);
+        alert(`커밋 실패: ${putRes.status}
+${errText}`);
         return;
       }
-      alert("catalog.json 커밋 완료!
-1~2분 후 공유 링크에 반영됩니다.");
+      alert(`catalog.json 커밋 완료!
+1~2분 후 공유 링크에 반영됩니다.`);
     } catch (e:any) {
       console.error(e);
       alert("커밋 중 오류: " + (e?.message || e));
