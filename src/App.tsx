@@ -45,6 +45,15 @@ const VENDOR_CHOICES = [
   "YES24",
 ];
 
+// --- GitHub 커밋 유틸리티 (UTF-8 Base64 안전 인코딩) ---
+const toBase64Utf8 = (str: string) => {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  // btoa는 Latin1만 허용 → UTF-8 바이트 시퀀스로 변환한 뒤 인코딩
+  return btoa(bin);
+};
+
 export default function PokaListApp() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const isAdmin = params.get("admin") === "1";
@@ -61,6 +70,70 @@ export default function PokaListApp() {
   const [myChecks, setMyChecks] = useState<Record<string, boolean>>({});
   const [adminOpen, setAdminOpen] = useState(isAdmin);
   const [gh, setGh] = useState({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" });
+  const [isCommitting, setIsCommitting] = useState(false);
+
+  // catalog.json 커밋 (관리자 패널 버튼 전용)
+  const commitCatalogJson = async () => {
+    try {
+      if (!gh.owner || !gh.repo || !gh.branch || !gh.token) {
+        alert("owner/repo/branch/토큰을 모두 입력하세요.");
+        return;
+      }
+      setIsCommitting(true);
+      const path = "public/catalog.json";
+      // 1) 현재 sha 조회 (있으면 업데이트, 없으면 생성)
+      let sha: string | undefined;
+      const metaRes = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(gh.branch)}`, {
+        headers: { Authorization: `token ${gh.token}`, Accept: "application/vnd.github+json" },
+      });
+      if (metaRes.ok) {
+        const meta = await metaRes.json();
+        if (meta && meta.sha) sha = meta.sha;
+      }
+
+      // 2) catalog 내용 만들기 (배포 포맷은 배열/또는 {items:[]} 둘 다 호환되지만 배열로 저장)
+      const payloadItems = items.map((it) => ({
+        id: it.id,
+        title: it.title,
+        event: it.event,
+        vendor: it.vendor,
+        notes: it.notes,
+        purchaseDate: it.purchaseDate,
+        year: it.year,
+        imageUrl: it.imageUrl,
+        have: !!it.have,
+      }));
+      const jsonText = JSON.stringify(payloadItems, null, 2);
+      const contentB64 = toBase64Utf8(jsonText);
+
+      // 3) PUT contents API
+      const putRes = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${encodeURIComponent(path)}`, {
+        method: "PUT",
+        headers: { Authorization: `token ${gh.token}`, "Content-Type": "application/json", Accept: "application/vnd.github+json" },
+        body: JSON.stringify({
+          message: "chore: update catalog.json via admin panel",
+          content: contentB64,
+          branch: gh.branch,
+          sha,
+        }),
+      });
+
+      if (!putRes.ok) {
+        const errText = await putRes.text();
+        console.error(errText);
+        alert("커밋 실패: " + putRes.status + "
+" + errText);
+        return;
+      }
+      alert("catalog.json 커밋 완료!
+1~2분 후 공유 링크에 반영됩니다.");
+    } catch (e:any) {
+      console.error(e);
+      alert("커밋 중 오류: " + (e?.message || e));
+    } finally {
+      setIsCommitting(false);
+    }
+  };
 
   useEffect(()=>{ document.title = "BOGUMMY PHOTOCARD" }, []);
 
@@ -168,7 +241,7 @@ export default function PokaListApp() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <label className="bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-xl inline-flex items-center gap-2 cursor-pointer"><Upload size={16}/> 이미지 업로드<input type="file" multiple className="hidden"/></label>
-                <button className="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">catalog.json 커밋</button>
+                <button onClick={commitCatalogJson} disabled={isCommitting} className={`px-3 py-2 rounded-xl text-white ${isCommitting ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'}`}>{isCommitting ? '커밋 중…' : 'catalog.json 커밋'}</button>
                 <button className="px-3 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 inline-flex items-center gap-2"><LinkIcon size={16}/> JSON 주소로 공유(src)</button>
                 <div className="text-xs text-slate-600">커밋 후 1~2분 후 반영됩니다.</div>
               </div>
