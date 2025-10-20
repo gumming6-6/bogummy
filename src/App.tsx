@@ -235,6 +235,39 @@ export default function PokaListApp() {
         {items.length === 0 && !loadError && (
           <div className="text-center text-slate-400">카드가 없습니다.</div>
         )}
+              {/* 상세/수정/등록 모달 */}
+        {detail && (
+          <DetailModal
+            mode={detailMode}
+            shareMode={shareMode}
+            card={detail}
+            list={viewList}
+            onClose={()=>{ setDetail(null); setDetailMode(null); }}
+            onPrev={(id:string)=>{
+              const idx = viewList.findIndex(c=>c.id===id);
+              if (idx>0) { setDetail(viewList[idx-1]); setDetailMode(shareMode?"view":detailMode); }
+            }}
+            onNext={(id:string)=>{
+              const idx = viewList.findIndex(c=>c.id===id);
+              if (idx>=0 && idx<viewList.length-1) { setDetail(viewList[idx+1]); setDetailMode(shareMode?"view":detailMode); }
+            }}
+            onToggleHave={(id:string, checked:boolean)=>{
+              if (shareMode) setMyChecks(prev=>({ ...prev, [id]: checked }));
+              else setItems(prev=>prev.map(c=>c.id===id?{...c, have: checked}:c));
+            }}
+            onSave={(draft:any)=>{
+              if (draft.__delete) {
+                setItems(prev=>prev.filter(c=>c.id!==draft.id));
+                setDetail(null); setDetailMode(null);
+                return;
+              }
+              const next = { ...draft, year: draft.year || yearFrom(draft.purchaseDate) };
+              if (detailMode === "create") setItems(prev=>[...prev, next]);
+              else setItems(prev=>prev.map(c=>c.id===next.id? next : c));
+              setDetail(null); setDetailMode(null);
+            }}
+          />
+        )}
       </main>
     </div>
   );
