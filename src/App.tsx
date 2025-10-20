@@ -18,11 +18,6 @@ const byDateAsc = (a: any, b: any) => {
   return (a.__idx ?? 0) - (b.__idx ?? 0);
 };
 
-/** 수정 요약
- * 1) 상세 모달의 이벤트/연도 입력을 드롭다운으로 복원
- * 2) 관리자 패널 상단 버튼 정렬(flex wrap) 문제 해결
- */
-
 export default function PokaListApp() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const isAdmin = params.get("admin") === "1";
@@ -35,10 +30,10 @@ export default function PokaListApp() {
   const [loadError, setLoadError] = useState("");
   const [filter, setFilter] = useState({ search: "", event: "전체", year: "전체" });
   const [detail, setDetail] = useState<any|null>(null);
+  const [detailMode, setDetailMode] = useState<"view"|"edit"|"create"|null>(null);
   const [myChecks, setMyChecks] = useState<Record<string, boolean>>({});
   const [adminOpen, setAdminOpen] = useState(isAdmin);
   const [gh, setGh] = useState({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" });
-
 
   useEffect(()=>{ document.title = "BOGUMMY PHOTOCARD" }, []);
 
@@ -104,8 +99,6 @@ export default function PokaListApp() {
 
   const eventOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.event).filter(Boolean)))], [items]);
   const yearOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.year).filter(Boolean))).sort((a:any,b:any)=>Number(a)-Number(b))], [items]);
-  const formEventOptions = React.useMemo(() => eventOptions.filter(v => v !== "전체"), [eventOptions]);
-  const formYearOptions = React.useMemo(() => yearOptions.filter(v => v !== "전체"), [yearOptions]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -115,7 +108,14 @@ export default function PokaListApp() {
           <div className="text-2xl font-extrabold">BOGUMMY PHOTOCARD LIST❣️</div>
           {!shareMode && (
             <div className="flex flex-wrap items-center gap-2 ml-auto">
-              <button className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700"><Plus size={14}/> 새 항목</button>
+              <button
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700"
+                onClick={() => {
+                  const blank = { id: `${Date.now().toString(36)}-new`, title: "", event: "", vendor: "", notes: "", purchaseDate: "", year: "", imageUrl: "", have: false };
+                  setDetail(blank);
+                  setDetailMode("create");
+                }}
+              ><Plus size={14}/> 새 항목</button>
               <label className="bg-slate-700 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-slate-800 cursor-pointer"><Upload size={14}/> 다중 이미지 추가<input type="file" multiple className="hidden"/></label>
               <button className="bg-amber-500 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-amber-600"><LinkIcon size={14}/> JSON 주소로 공유(src)</button>
               <button onClick={()=>setAdminOpen(v=>!v)} className="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-purple-700">관리자 패널 {adminOpen?"닫기":"열기"}</button>
@@ -170,7 +170,7 @@ export default function PokaListApp() {
             <h2 className="text-lg font-semibold mb-3 border-b border-slate-300 pb-1">{y}</h2>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(160px, 1fr))` }}>
               {grouped[y]?.map((card: any, i: number) => (
-                <article key={card.id || i} className="relative bg-white shadow rounded-xl p-2 border border-slate-200 cursor-pointer" onClick={()=>setDetail(card)}>
+                <article key={card.id || i} className="relative bg-white shadow rounded-xl p-2 border border-slate-200 cursor-pointer" onClick={()=>{ setDetail(card); setDetailMode("view"); }}>
                   <div className="w-full rounded-xl border border-slate-200 overflow-hidden aspect-[2/3] bg-white">
                     {card.imageUrl ? (
                       <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
@@ -180,7 +180,7 @@ export default function PokaListApp() {
                   </div>
                   <div className="mt-2 text-sm font-medium text-slate-800 truncate" title={card.title}>{card.title || "(제목 없음)"}</div>
                   <div className="text-xs text-slate-500 truncate">{card.event || "-"} · {card.year || "-"}</div>
-                  <label className="mt-1 flex items-center gap-1 text-xs text-slate-600 select-none">
+                  <label className="mt-1 flex items-center gap-1 text-xs text-slate-600 select-none" onClick={(e)=>e.stopPropagation()}>
                     <input type="checkbox" checked={shareMode ? !!myChecks[card.id] : !!card.have}
                       onChange={(e)=>{
                         const checked = e.currentTarget.checked;
@@ -191,8 +191,8 @@ export default function PokaListApp() {
                   </label>
                   {!shareMode && (
                     <div className="absolute right-2 top-2 flex gap-1">
-                      <button title="수정" className="p-1 rounded bg-white/80 hover:bg-white shadow" onClick={(e)=>{e.stopPropagation(); setDetail(card);}}><Pencil size={14}/></button>
-                      <button title="삭제" className="p-1 rounded bg-white/80 hover:bg-white shadow" onClick={(e)=>{e.stopPropagation(); setItems(prev=>prev.filter(c=>c.id!==card.id));}}><Trash2 size={14}/></button>
+                      <button title="수정" className="p-1 rounded bg-white/80 hover:bg-white shadow" onClick={(e)=>{e.stopPropagation(); setDetail(card); setDetailMode("edit");}}><Pencil size={14}/></button>
+                      <button title="삭제" className="p-1 rounded bg-white/80 hover:bg-white shadow" onClick={(e)=>{e.stopPropagation(); if(window.confirm("삭제하시겠습니까?")) setItems(prev=>prev.filter(c=>c.id!==card.id));}}><Trash2 size={14}/></button>
                     </div>
                   )}
                 </article>
@@ -209,32 +209,60 @@ export default function PokaListApp() {
       {/* 상세 모달 */}
       {detail && (
         <DetailModal
+          mode={detailMode}
           shareMode={shareMode}
           card={detail}
           list={filtered.sort(byDateAsc)}
-          onClose={()=>setDetail(null)}
+          onClose={()=>{ setDetail(null); setDetailMode(null); }}
           onPrev={(id)=>{ const arr = filtered.sort(byDateAsc); const i = arr.findIndex(c=>c.id===id); if(i>0) setDetail(arr[i-1]); }}
           onNext={(id)=>{ const arr = filtered.sort(byDateAsc); const i = arr.findIndex(c=>c.id===id); if(i>=0 && i<arr.length-1) setDetail(arr[i+1]); }}
           onToggleHave={(id,checked)=>{ if(shareMode) setMyChecks(p=>({...p,[id]:checked})); else setItems(p=>p.map(c=>c.id===id?{...c,have:checked}:c)); }}
+          onSave={(updated:any)=>{
+            if (updated?.__delete) {
+              setItems(prev=>prev.filter(c=>c.id!==updated.id));
+              setDetail(null); setDetailMode(null); return;
+            }
+            if (detailMode === "create") {
+              setItems(prev=>[...prev, { ...updated, id: updated.id || `${Date.now().toString(36)}-id` }]);
+            } else if (detailMode === "edit") {
+              setItems(prev=>prev.map(c=>c.id===updated.id?updated:c));
+            }
+            setDetail(null); setDetailMode(null);
+          }}
         />
       )}
     </div>
   );
 }
 
-function DetailModal({ shareMode, card, list, onClose, onPrev, onNext, onToggleHave }: any){
+function DetailModal({ mode, shareMode, card, list, onClose, onPrev, onNext, onToggleHave, onSave }: any){
   const idx = React.useMemo(()=> list.findIndex((c:any)=>c.id===card.id), [list, card]);
   const canPrev = idx>0; const canNext = idx>=0 && idx<list.length-1;
+  const isViewOnly = shareMode || mode === "view";
+
+  const [draft, setDraft] = useState<any>(card);
+  useEffect(()=>{ setDraft(card); }, [card]);
+
+  const fileRef = useRef<HTMLInputElement|null>(null);
+  const openFile = ()=>{ if(!isViewOnly) fileRef.current?.click(); };
+  const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=> setDraft((d:any)=>({ ...d, imageUrl: String(r.result||"") }));
+    r.readAsDataURL(f);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm grid place-items-center p-3 z-[200]" onClick={onClose}>
       <div className="bg-white rounded-2xl w-[90vw] max-w-[360px] shadow-xl p-3 relative" onClick={(e)=>e.stopPropagation()}>
         <button className="absolute right-2 top-2 p-1 rounded hover:bg-slate-100" onClick={onClose}><X size={18}/></button>
-        <div className="relative rounded-xl border overflow-hidden aspect-[2/3] bg-white grid place-items-center mb-2">
-          {card.imageUrl ? (<img src={card.imageUrl} className="w-full h-full object-cover"/>) : (<div className="text-slate-300"><ImageIcon/></div>)}
+        <div className="relative rounded-xl border overflow-hidden aspect-[2/3] bg-white grid place-items-center mb-2" onClick={openFile}>
+          {(draft.imageUrl || card.imageUrl) ? (<img src={draft.imageUrl || card.imageUrl} className="w-full h-full object-cover"/>) : (<div className="text-slate-300"><ImageIcon/></div>)}
           {canPrev && (<button className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={()=>onPrev(card.id)}><ChevronLeft/></button>)}
           {canNext && (<button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow" onClick={()=>onNext(card.id)}><ChevronRight/></button>)}
+          {!isViewOnly && (<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />)}
         </div>
-        {shareMode ? (
+        {isViewOnly ? (
           <div className="space-y-1 text-sm">
             <div><b>제목</b> {card.title || "(제목 없음)"}</div>
             <div><b>구매 날짜</b> {card.purchaseDate || "-"}</div>
@@ -246,17 +274,17 @@ function DetailModal({ shareMode, card, list, onClose, onPrev, onNext, onToggleH
           </div>
         ) : (
           <div className="space-y-2 text-sm">
-            <label className="block">제목<input defaultValue={card.title} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">구매 날짜<input type="date" defaultValue={card.purchaseDate} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">이벤트<input defaultValue={card.event} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">구매처<input defaultValue={card.vendor} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">연도<input defaultValue={card.year} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="block">비고<textarea defaultValue={card.notes} rows={3} className="w-full border rounded px-2 py-1 mt-1"/></label>
-            <label className="mt-1 flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={!!card.have} onChange={(e)=>onToggleHave(card.id, e.currentTarget.checked)} /> 보유</label>
+            <label className="block">제목<input value={draft.title||""} onChange={(e)=>setDraft({...draft,title:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">구매 날짜<input type="date" value={draft.purchaseDate||""} onChange={(e)=>setDraft({...draft,purchaseDate:e.target.value, year: (e.target.value? new Date(e.target.value).getFullYear().toString(): draft.year)})} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">이벤트<input value={draft.event||""} onChange={(e)=>setDraft({...draft,event:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">구매처<input value={draft.vendor||""} onChange={(e)=>setDraft({...draft,vendor:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">연도<input value={draft.year||""} onChange={(e)=>setDraft({...draft,year:e.target.value})} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="block">비고<textarea value={draft.notes||""} onChange={(e)=>setDraft({...draft,notes:e.target.value})} rows={3} className="w-full border rounded px-2 py-1 mt-1"/></label>
+            <label className="mt-1 flex items-center gap-2 text-sm"><input type="checkbox" checked={!!draft.have} onChange={(e)=>setDraft({...draft,have:e.currentTarget.checked})} /> 보유</label>
             <div className="flex justify-end gap-2 pt-2 border-t mt-2">
               <button className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200" onClick={onClose}>닫기</button>
-              <button className="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">저장</button>
-              <button className="px-3 py-1.5 rounded bg-rose-600 text-white hover:bg-rose-700">삭제</button>
+              <button className="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700" onClick={()=>onSave(draft)}>저장</button>
+              <button className="px-3 py-1.5 rounded bg-rose-600 text-white hover:bg-rose-700" onClick={()=>{ if(window.confirm('삭제하시겠습니까?')) onSave({ ...draft, __delete: true }); }}>삭제</button>
             </div>
           </div>
         )}
