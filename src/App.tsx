@@ -38,8 +38,6 @@ export default function PokaListApp() {
   const [adminOpen, setAdminOpen] = useState(isAdmin);
   const [gh, setGh] = useState({ owner: "gumming6-6", repo: "bogummy", branch: "main", token: "" });
 
-  const eventOptions = useMemo(() => ["", "팬미팅", "팬미 추가특전", "기타"], []);
-  const yearOptions = useMemo(() => ["", "2023", "2024", "2025"], []);
 
   useEffect(()=>{ document.title = "BOGUMMY PHOTOCARD" }, []);
 
@@ -100,6 +98,8 @@ export default function PokaListApp() {
 
   const eventOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.event).filter(Boolean)))], [items]);
   const yearOptions = React.useMemo(() => ["전체", ...Array.from(new Set(items.map(c=>c.year).filter(Boolean))).sort((a:any,b:any)=>Number(a)-Number(b))], [items]);
+  const formEventOptions = React.useMemo(() => eventOptions.filter(v => v !== "전체"), [eventOptions]);
+  const formYearOptions = React.useMemo(() => yearOptions.filter(v => v !== "전체"), [yearOptions]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -196,9 +196,9 @@ export default function PokaListApp() {
             <div className="space-y-2 text-sm">
               <label className="block">제목<input className="w-full border rounded px-2 py-1 mt-1"/></label>
               <label className="block">구매 날짜<input type="date" className="w-full border rounded px-2 py-1 mt-1"/></label>
-              <label className="block">이벤트<select className="w-full border rounded px-2 py-1 mt-1">{eventOptions.map(v=>(<option key={v}>{v}</option>))}</select></label>
+              <label className="block">이벤트<select className="w-full border rounded px-2 py-1 mt-1">{formEventOptions.map(v=>(<option key={v}>{v}</option>))}</select></label>
               <label className="block">구매처<input className="w-full border rounded px-2 py-1 mt-1"/></label>
-              <label className="block">연도<select className="w-full border rounded px-2 py-1 mt-1">{yearOptions.map(v=>(<option key={v}>{v}</option>))}</select></label>
+              <label className="block">연도<select className="w-full border rounded px-2 py-1 mt-1">{formYearOptions.map(v=>(<option key={v}>{v}</option>))}</select></label>
               <label className="block">비고<textarea rows={3} className="w-full border rounded px-2 py-1 mt-1"/></label>
               <div className="flex justify-end gap-2 pt-2 border-t mt-2">
                 <button className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200">닫기</button>
